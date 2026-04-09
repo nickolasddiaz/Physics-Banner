@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "rootDir": "./src/",
+    "outDir": "./dist/",
+
+    "module": "esnext",
+    "target": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [],
+
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false,
+
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    "strict": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "allowJs": false
+  },
+  "include": ["./src/**/*", "./img/**/*"],
+  "exclude": ["node_modules"]
+}
