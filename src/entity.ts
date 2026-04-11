@@ -1,13 +1,12 @@
 import { Vec2, Point } from './vec2.js';
-import {
-    height, width, max_side,
-    mass, inv_inertia,
-    canvas_width, canvas_height, elasticity, charCache
-} from './const.js';
 import { Rectangle } from './quadtree.js';
+import { charCache } from './const.js';
+import { border_W, border_H } from './main.js';
+
+
 
 let id: number = 0;
-const _tmp0: Vec2 = new Vec2();
+const TAU = Math.PI * 2;
 
 // SAP Theorem
 // https://github.com/danielszabo88/mocorgo/blob/master/15%20-%20Separating%20Axis%20Theorem/script.js
@@ -18,22 +17,36 @@ const _tmp0: Vec2 = new Vec2();
 // Rotational Collision
 // https://github.com/danielszabo88/mocorgo/blob/master/14%20-%20Rotational%20Collision/script.js
 
-type Vec2_4 = [Vec2, Vec2, Vec2, Vec2];
+export type Vec2_4 = [Vec2, Vec2, Vec2, Vec2];
 
 export class Entity {
-    _projMin = 0;
-    _projMax = 0;
-    private readonly char: string;
-    private pos: Vec2;
-    private vel: Vec2;
-    private ang: number;
-    private angVel: number;
-    public id: number;
+    projMin = 0;
+    projMax = 0;
+    readonly char: string;
+    pos: Vec2;
+    vel: Vec2;
+    ang: number;
+    angVel: number;
+    id: number;
     center: Point;
     bounding_rect: Rectangle;
-    private readonly vertex: Vec2_4;
-    private readonly _axes: Vec2_4;
-    constructor(posX: number, posY: number, velX: number, velY: number, char: string) {
+    readonly vertex: Vec2_4;
+    readonly axes: Vec2_4;
+    height: number;
+    width: number;
+    max_side: number;
+    mass: number;
+    inv_inertia: any;
+    constructor(posX: number, posY: number, velX: number, velY: number, char: string, 
+        width: number, height: number, mass: number
+    ) {
+        this.height = height;
+        this.width = width;
+        this.max_side = Math.sqrt(width ** 2 + height ** 2);
+        this.mass = mass;
+        const inertia = (mass * (width ** 2 + height ** 2)) / 12;
+        this.inv_inertia = 1 / inertia;
+
         this.char = char;
         this.pos = new Vec2(posX, posY);
         this.vel = new Vec2(velX, velY);
@@ -52,7 +65,7 @@ export class Entity {
             new Vec2(this.pos.x, this.pos.y + height),
         ];
 
-        this._axes = [new Vec2(), new Vec2(), new Vec2(), new Vec2()];
+        this.axes = [new Vec2(), new Vec2(), new Vec2(), new Vec2()];
 
         this.set_vertex();
     }
@@ -67,8 +80,8 @@ export class Entity {
     }
 
     set_vertex(): void {
-        this.center.x = this.pos.x + width / 2;
-        this.center.y = this.pos.y + height / 2;
+        this.center.x = this.pos.x + this.width / 2;
+        this.center.y = this.pos.y + this.height / 2;
 
         const cosA: number = Math.cos(this.ang);
         const sinA: number = Math.sin(this.ang);
@@ -83,29 +96,30 @@ export class Entity {
         };
 
         rotatePoint(this.pos.x, this.pos.y, 0);
-        rotatePoint(this.pos.x + width, this.pos.y, 1);
-        rotatePoint(this.pos.x + width, this.pos.y + height, 2);
-        rotatePoint(this.pos.x, this.pos.y + height, 3);
+        rotatePoint(this.pos.x + this.width, this.pos.y, 1);
+        rotatePoint(this.pos.x + this.width, this.pos.y + this.height, 2);
+        rotatePoint(this.pos.x, this.pos.y + this.height, 3);
     }
 
     update(deltaTime: number): void {
-        if (this.pos.x > canvas_width - width) {
-            this.vel.x = -Math.abs(this.vel.x);
+
+        if (this.pos.x > border_W) {
+            this.pos.x = 0;
         } else if (this.pos.x < 0) {
-            this.vel.x = Math.abs(this.vel.x);
+            this.pos.x = border_W;
         }
 
-        if (this.pos.y > canvas_height) {
-            this.vel.y = -Math.abs(this.vel.y);
+        if (this.pos.y > border_H) {
+            this.pos.y = 0;
         } else if (this.pos.y < 0) {
-            this.vel.y = Math.abs(this.vel.y);
+            this.pos.y = border_H;
         }
 
         this.pos.x += this.vel.x * deltaTime;
         this.pos.y += this.vel.y * deltaTime;
 
         this.ang += this.angVel * deltaTime;
-        this.ang %= (Math.PI * 2);
+        this.ang %= TAU;
 
         this.set_vertex();
         this.set_bounding_rect();
@@ -115,159 +129,32 @@ export class Entity {
         this.bounding_rect.set_rect(
             this.center.x,
             this.center.y,
-            max_side * 2,
-            max_side * 2
+            this.max_side * 2,
+            this.max_side * 2
         );
     }
 
-    //Compute 4 SAT axes into pre-allocated this._axes and rectB._axes.
-    _computeAxes(rectB: Entity): void {
+    //Compute 4 SAT axes into pre-allocated this.axes and rectB.axes.
+    computeAxes(rectB: Entity): void {
         const a = this.vertex;
         const b = rectB.vertex;
 
-        const ax0 = this._axes[0];
-        const ax1 = this._axes[1];
-        const ax2 = rectB._axes[0];
-        const ax3 = rectB._axes[1];
+        const ax0 = this.axes[0];
+        const ax1 = this.axes[1];
+        const ax2 = rectB.axes[0];
+        const ax3 = rectB.axes[1];
 
-        a[1].subtrTo(a[0], ax0);
+        ax0.subtrTo(a[1], a[0]);
         ax0.normalMut();
 
-        a[2].subtrTo(a[1], ax1);
+        ax1.subtrTo(a[2], a[1]);
         ax1.normalMut();
 
-        b[1].subtrTo(b[0], ax2);
+        ax2.subtrTo(b[1], a[0]);
         ax2.normalMut();
 
-        b[2].subtrTo(b[1], ax3);
+        ax3.subtrTo(b[2], a[1]);
         ax3.normalMut();
-    }
-
-    checkCollision(rectB: Entity): void {
-        if (!this.bounding_rect.intersects(rectB.bounding_rect)) return;
-
-        // passed AABB detection
-        // starting SAP detection
-
-        this._computeAxes(rectB);
-
-        const axes: Vec2_4 = [this._axes[0], this._axes[1], rectB._axes[0], rectB._axes[1]];
-
-        let minOverlap: number = Infinity;
-        let mtvAxisX = 0, mtvAxisY = 0;
-        let foundAxis = false;
-
-        for (let i: number = 0; i < 4; i++) {
-            const axis: Vec2 = axes[i]!;
-
-            if (axis.x === 0 && axis.y === 0) continue;
-
-            this.projectInto(axis);
-            rectB.projectInto(axis);
-
-            if (this._projMax < rectB._projMin || rectB._projMax < this._projMin) {
-                return;
-            }
-
-            // shapes collided
-            // collision resolution of the shapes
-            // getting the Minimum Translation Vector
-
-            const overlap: number = Math.min(this._projMax, rectB._projMax)
-                        - Math.max(this._projMin, rectB._projMin);
-
-
-            if (overlap < minOverlap) {
-                minOverlap = overlap;
-                mtvAxisX = axis.x;
-                mtvAxisY = axis.y;
-                foundAxis = true;
-            }
-        }
-
-        if (!foundAxis || !isFinite(minOverlap)) return;
-
-        this.pos.subtrTo(rectB.pos, _tmp0);
-        if (_tmp0.x * mtvAxisX + _tmp0.y * mtvAxisY < 0) {
-            mtvAxisX = -mtvAxisX;
-            mtvAxisY = -mtvAxisY;
-        }
-
-        const mtvX: number = mtvAxisX * minOverlap;
-        const mtvY: number = mtvAxisY * minOverlap;
-
-        // getting rotational collision
-
-        // collision normal
-
-        const normalX: number = mtvAxisX;
-        const normalY: number = mtvAxisY;
-
-        // closing velocity
-        let bestDist: number = -Infinity;
-        let contactX: number = 0, contactY: number = 0;
-        for (const v of rectB.vertex) {
-            const dist = mtvAxisX * v.x + mtvAxisY * v.y;
-            if (dist > bestDist) {
-                bestDist = dist;
-                contactX = v.x;
-                contactY = v.y;
-            }
-        }
-
-        const collArm1X: number = contactX - this.center.x;
-        const collArm1Y: number = contactY - this.center.y;
-
-        const collArm2X: number = contactX - rectB.center.x;
-        const collArm2Y: number = contactY - rectB.center.y;
-
-        const rotVel1X: number = -this.angVel * collArm1Y;
-        const rotVel1Y: number =  this.angVel * collArm1X;
-
-        const rotVel2X: number = -rectB.angVel * collArm2Y;
-        const rotVel2Y: number =  rectB.angVel * collArm2X;
-
-        const closVel1X: number = this.vel.x + rotVel1X;
-        const closVel1Y: number = this.vel.y + rotVel1Y;
-
-        const closVel2X: number = rectB.vel.x + rotVel2X;
-        const closVel2Y: number = rectB.vel.y + rotVel2Y;
-
-
-        // impulse augmentation
-        let impAug1: number = collArm1X * normalY - collArm1Y * normalX;
-        impAug1 = impAug1 * impAug1 * inv_inertia;
-
-        let impAug2: number = collArm2X * normalY - collArm2Y * normalX;
-        impAug2 = impAug2 * impAug2 * inv_inertia;
-
-        // final impulse
-        const relVelX: number = closVel1X - closVel2X;
-        const relVelY: number = closVel1Y - closVel2Y;
-        const sepVel: number = relVelX * normalX + relVelY * normalY;
-        const new_sepVel: number = -sepVel * elasticity;
-        const vsep_diff: number = new_sepVel - sepVel;
-
-        const impulse: number = vsep_diff / (2 * mass + impAug1 + impAug2);
-        const impulseX: number = normalX * impulse;
-        const impulseY: number = normalY * impulse;
-
-        // apply the velocities
-        this.vel.x += impulseX;
-        this.vel.y += impulseY;
-        rectB.vel.x -= impulseX;
-        rectB.vel.y -= impulseY;
-
-        this.angVel  += inv_inertia * (collArm1X * impulseY - collArm1Y * impulseX);
-        rectB.angVel -= inv_inertia * (collArm2X * impulseY - collArm2Y * impulseX);
-
-        // move the positions back so they are not touching
-        const halfMtvX: number = mtvX * 0.5;
-        const halfMtvY: number = mtvY * 0.5;
-        this.pos.x += halfMtvX;
-        this.pos.y += halfMtvY;
-        rectB.pos.x -= halfMtvX;
-        rectB.pos.y -= halfMtvY;
     }
 
     projectInto(axis: Vec2): void {
@@ -278,7 +165,7 @@ export class Entity {
             if (p < min) min = p;
             if (p > max) max = p;
         }
-        this._projMin = min;
-        this._projMax = max;
+        this.projMin = min;
+        this.projMax = max;
     }
 }

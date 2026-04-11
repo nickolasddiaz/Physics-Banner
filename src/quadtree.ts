@@ -1,10 +1,12 @@
 // Quadtree
 // https://github.com/CodingTrain/QuadTree/blob/main/quadtree.js
 
-import {DEFAULT_CAPACITY, MAX_DEPTH} from './const.js';
 import type {Point} from "./vec2";
 
 type Quadrant = number;
+
+const DEFAULT_CAPACITY: number = 16;
+const MAX_DEPTH: number = 8;
 
 const top_left: Quadrant = 0;
 const top_right: Quadrant = 1;

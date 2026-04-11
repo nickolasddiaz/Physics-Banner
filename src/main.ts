@@ -1,7 +1,8 @@
 import {Entity} from './entity.js';
 import {Rectangle, QuadTree} from './quadtree.js';
-import {canvas, ctx, ascii_art, height, width, canvas_width, canvas_height, generateRandomCharacter, min_frame_rate} from './const.js'
-import type {Point} from "./vec2";
+import {canvas, ctx, ascii_art, generateRandomCharacter, min_frame_rate} from './const.js'
+import type {Point} from "./vec2.js";
+import { checkCollision } from './checkCollision.js';
 
 const entities: Entity[] = []
 
@@ -10,20 +11,31 @@ function isWhitespace(char: string): boolean {
 }
 
 
+const height = 10;
+const width = height * 0.60;
+export const canvas_width = 400;
+export const canvas_height = 400;
+export const border_W = canvas_width + 10;
+export const border_H = canvas_height + 10;
+const RANDOM_SPEED = 80;
+
 for (const [y, linesArray] of ascii_art.split(/\r?\n/).entries()){
     for (const [x, char] of linesArray.split('').entries()) {
         if (!isWhitespace(char)){
-            entities.push(new Entity(x * (width  + 1) + 60, y * (height + 1) + 100, 0, 0, char));
+            entities.push(new Entity(x * (width  + 1) + 60, y * (height + 1) + 100, 0, 0, char, width, height, 1));
         }
     }
 }
 
+
 function spawn_entity(): void{
     const randomRadian: number = Math.random() * 2 * Math.PI;
-    const x: number = Math.cos(randomRadian) * canvas_width;
-    const y: number = Math.sin(randomRadian) * canvas_height;
+    const x: number = Math.cos(randomRadian) * 2;
+    const y: number = Math.sin(randomRadian) * 2;
 
-    entities.push(new Entity(x, y, x, y, generateRandomCharacter()));
+    entities.push(new Entity(x* canvas_width, y * canvas_height, 
+        x* RANDOM_SPEED, y * RANDOM_SPEED, 
+        generateRandomCharacter(), width, height, 8));
 }
 
 
@@ -55,14 +67,14 @@ function update(currentTime: number) {
         quadTree.insert(entity.center);
     }
     
-    for (const entity of entities) {
-        const points: Point[] = quadTree.query(entity.bounding_rect);
+    for (const entityA of entities) {
+        const points: Point[] = quadTree.query(entityA.bounding_rect);
         if (points.length === 1) continue;
 
         for (const point of points) {
-            const other: Entity = point.userData;
-            if (entity.id < other.id) {
-                entity.checkCollision(other);
+            const entityB: Entity = point.userData;
+            if (entityA.id < entityB.id) {
+                checkCollision(entityA, entityB);
             }
         }
     }
@@ -74,3 +86,4 @@ requestAnimationFrame((timestamp: number): void => {
     lastTime = timestamp;
     requestAnimationFrame(update);
 });
+

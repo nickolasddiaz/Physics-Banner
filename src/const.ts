@@ -2,21 +2,7 @@ export const min_frame_rate: number = 1 / 16;
 export const canvas: HTMLCanvasElement = document.getElementById('pinballCanvas') as HTMLCanvasElement;
 export const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-export const height = 10;
-export const width = height * 0.60;
 
-export const max_side: number = Math.sqrt(width ** 2 + height ** 2);
-export const half_side: number = max_side / 2;
-export const mass: number = 1;
-export const inertia: number = (mass * (width ** 2 + height ** 2)) / 12;
-export const inv_inertia: number = 1 / inertia;
-
-export const canvas_width: number = canvas.width;
-export const canvas_height: number = canvas.height;
-export const elasticity: number= 0.7;
-
-export const DEFAULT_CAPACITY: number = 16;
-export const MAX_DEPTH: number = 8;
 
 const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
 
@@ -66,4 +52,4 @@ function preRenderChars(chars: Set<string>, size: number, color: string) {
    });
 }
 
-preRenderChars(uniqueChars, height, '#0000ff')
+preRenderChars(uniqueChars, 10, '#0000ff')
