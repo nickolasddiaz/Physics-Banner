@@ -1,5 +1,3 @@
-import type {Entity} from "./entity";
-
 export class Vec2 {
     public x: number;
     public y: number;
@@ -80,16 +78,19 @@ export class Vec2 {
         return dx * dx + dy * dy;
     }
 
+    distanceFrom(other: Vec2): number {
+        const dx = other.x - this.x;
+        const dy = other.y - this.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     scaleMult(num: number): void{
         this.x *= num;
         this.y *= num;
     }
-}
 
-export class Point extends Vec2 {
-    public userData: Entity;
-    constructor(x: number, y: number, userData: Entity) {
-        super(x, y);
-        this.userData = userData;
+    scaleDiv(num: number): void{
+        this.x /= num;
+        this.y /= num;
     }
 }

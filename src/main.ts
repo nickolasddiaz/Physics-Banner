@@ -1,8 +1,11 @@
-import {Entity} from './entity.js';
-import {Rectangle, QuadTree} from './quadtree.js';
-import {canvas, ctx, ascii_art, generateRandomCharacter, min_frame_rate} from './const.js'
-import type {Point} from "./vec2.js";
-import { checkCollision } from './checkCollision.js';
+import {Entity} from './entity/entity.js';
+import {canvas, ctx, ascii_art, generateRandomCharacter, min_frame_rate, height} from './const.js'
+import { checkCollision } from './collision/checkCollision.js';
+import { draw_SP, render } from './draw/draw.js';
+import { QuadTree } from './collision/quadtree.js';
+import type { Point } from './geometry/point.js';
+import { Rectangle } from './collision/rectangle.js';
+import { SpringConnection, SpringPoint } from './geometry/spring.js';
 
 const entities: Entity[] = []
 
@@ -11,7 +14,6 @@ function isWhitespace(char: string): boolean {
 }
 
 
-const height = 10;
 const width = height * 0.60;
 export const canvas_width = 400;
 export const canvas_height = 400;
@@ -49,6 +51,23 @@ let lastTime: number = 0;
 const bounding_rect = new Rectangle(canvas_width / 2, canvas_height / 2, canvas_width, canvas_height);
 let quadTree: QuadTree = QuadTree.create(bounding_rect);
 
+
+const p1: SpringPoint = new SpringPoint(25, 25);
+const p2: SpringPoint = new SpringPoint(50, 25);
+const p3: SpringPoint = new SpringPoint(25, 50);
+const p4: SpringPoint = new SpringPoint(50, 50);
+
+const springs: SpringConnection[] = [
+    new SpringConnection(p1, p2),
+    new SpringConnection(p1, p3),
+    new SpringConnection(p1, p4),
+    new SpringConnection(p2, p3),
+    new SpringConnection(p2, p4),
+    new SpringConnection(p3, p4),
+]
+
+
+
 function update(currentTime: number) {
     const deltaTime: number = Math.min((currentTime - lastTime) / 1000, min_frame_rate);
     lastTime = currentTime;
@@ -56,28 +75,38 @@ function update(currentTime: number) {
     ctx.clearRect(0, 0, canvas_width, canvas_height);
     ctx.reset();
 
-    for (const entity of entities) {
-        entity.update(deltaTime);
-        entity.render(ctx);
+    for(const spring of springs){
+        spring.updateSpring(deltaTime);
     }
 
-    quadTree.clear();
-
-    for(const entity of entities){
-        quadTree.insert(entity.center);
+    for(const spring of springs){
+        draw_SP(spring, ctx);
     }
+
+    p1.pos.x += deltaTime;
+
+    // for (const entity of entities) {
+    //     entity.update(deltaTime);
+    //     render(entity, ctx);
+    // }
+
+    // quadTree.clear();
+
+    // for(const entity of entities){
+    //     quadTree.insert(entity.center);
+    // }
     
-    for (const entityA of entities) {
-        const points: Point[] = quadTree.query(entityA.bounding_rect);
-        if (points.length === 1) continue;
+    // for (const entityA of entities) {
+    //     const points: Point[] = quadTree.query(entityA.bounding_rect);
+    //     if (points.length === 1) continue;
 
-        for (const point of points) {
-            const entityB: Entity = point.userData;
-            if (entityA.id < entityB.id) {
-                checkCollision(entityA, entityB);
-            }
-        }
-    }
+    //     for (const point of points) {
+    //         const entityB: Entity = point.userData;
+    //         if (entityA.id < entityB.id) {
+    //             checkCollision(entityA, entityB);
+    //         }
+    //     }
+    // }
 
     requestAnimationFrame(update);
 }

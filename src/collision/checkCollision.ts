@@ -1,5 +1,5 @@
-import type { Entity, Vec2_4, } from "./entity.js";
-import { Vec2 } from "./vec2.js";
+import type { Entity, Vec2_4, } from "../entity/entity.js";
+import { Vec2 } from "../geometry/vec2.js";
 
 const elasticity: number = 0.7;
 

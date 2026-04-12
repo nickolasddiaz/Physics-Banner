@@ -3,6 +3,7 @@ export const canvas: HTMLCanvasElement = document.getElementById('pinballCanvas'
 export const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
 
 
+export const height = 50;
 
 const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
 
@@ -13,29 +14,30 @@ export function generateRandomCharacter(): string {
 
 
 // https://textpaint.com/text-art/ pipes
-export const ascii_art: string = `
-    ╔╗╔╗╔╗    ╔╗                 
-    ║║║║║║    ║║                 
-    ║║║║║║╔══╗║║ ╔══╗╔══╗╔╗╔╗╔══╗
-    ║╚╝╚╝║║╔╗║║║ ║╔═╝║╔╗║║╚╝║║╔╗║
-    ╚╗╔╗╔╝║║═╣║╚╗║╚═╗║╚╝║║║║║║║═╣
-     ╚╝╚╝ ╚══╝╚═╝╚══╝╚══╝╚╩╩╝╚══╝
+// export const ascii_art: string = `
+//     ╔╗╔╗╔╗    ╔╗                 
+//     ║║║║║║    ║║                 
+//     ║║║║║║╔══╗║║ ╔══╗╔══╗╔╗╔╗╔══╗
+//     ║╚╝╚╝║║╔╗║║║ ║╔═╝║╔╗║║╚╝║║╔╗║
+//     ╚╗╔╗╔╝║║═╣║╚╗║╚═╗║╚╝║║║║║║║═╣
+//      ╚╝╚╝ ╚══╝╚═╝╚══╝╚══╝╚╩╩╝╚══╝
                              
- ╔╗                             ╔╗     
-╔╝╚╗                           ╔╝╚╗    
-╚╗╔╝╔══╗    ╔╗╔╗╔╗ ╔╗    ╔══╗╔╗╚╗╔╝╔══╗
- ║║ ║╔╗║    ║╚╝║║║ ║║    ║══╣╠╣ ║║ ║╔╗║
- ║╚╗║╚╝║    ║║║║║╚═╝║    ╠══║║║ ║╚╗║║═╣
- ╚═╝╚══╝    ╚╩╩╝╚═╗╔╝    ╚══╝╚╝ ╚═╝╚══╝
-                ╔═╝║                   
-                ╚══╝                                                                                                                                                 
-`;
+//  ╔╗                             ╔╗     
+// ╔╝╚╗                           ╔╝╚╗    
+// ╚╗╔╝╔══╗    ╔╗╔╗╔╗ ╔╗    ╔══╗╔╗╚╗╔╝╔══╗
+//  ║║ ║╔╗║    ║╚╝║║║ ║║    ║══╣╠╣ ║║ ║╔╗║
+//  ║╚╗║╚╝║    ║║║║║╚═╝║    ╠══║║║ ║╚╗║║═╣
+//  ╚═╝╚══╝    ╚╩╩╝╚═╗╔╝    ╚══╝╚╝ ╚═╝╚══╝
+//                 ╔═╝║                   
+//                 ╚══╝                                                                                                                                                 
+// `;
+
+export const ascii_art: string = "test";
+
 
 export const charCache: Map<string, OffscreenCanvas> = new Map();
 
 const uniqueChars: Set<string> = new Set([...ascii_art, ...characters]);
-
-
 
 function preRenderChars(chars: Set<string>, size: number, color: string) {
    chars.forEach(char => {
@@ -52,4 +54,4 @@ function preRenderChars(chars: Set<string>, size: number, color: string) {
    });
 }
 
-preRenderChars(uniqueChars, 10, '#0000ff')
+preRenderChars(uniqueChars, height, '#0000ff');

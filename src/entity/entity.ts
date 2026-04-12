@@ -1,7 +1,7 @@
-import { Vec2, Point } from './vec2.js';
-import { Rectangle } from './quadtree.js';
-import { charCache } from './const.js';
-import { border_W, border_H } from './main.js';
+import { Point } from '../geometry/point.js';
+import { Rectangle } from '../collision/rectangle.js';
+import { Vec2 } from '../geometry/vec2.js';
+import { border_W, border_H } from '../main.js';
 
 
 
@@ -42,7 +42,7 @@ export class Entity {
     ) {
         this.height = height;
         this.width = width;
-        this.max_side = Math.sqrt(width ** 2 + height ** 2);
+        this.max_side = Math.sqrt(width ** 2 + height ** 2); // used for AABB detection
         this.mass = mass;
         const inertia = (mass * (width ** 2 + height ** 2)) / 12;
         this.inv_inertia = 1 / inertia;
@@ -68,15 +68,6 @@ export class Entity {
         this.axes = [new Vec2(), new Vec2(), new Vec2(), new Vec2()];
 
         this.set_vertex();
-    }
-
-    render(ctx: CanvasRenderingContext2D): void {
-        const sprite: OffscreenCanvas = charCache.get(this.char)!;
-        const cos: number = Math.cos(this.ang);
-        const sin: number = Math.sin(this.ang);
-
-        ctx.setTransform(cos, sin, -sin, cos, this.pos.x, this.center.y);
-        ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
 
     set_vertex(): void {
