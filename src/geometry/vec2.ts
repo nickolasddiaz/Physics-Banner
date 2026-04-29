@@ -65,10 +65,10 @@ export class Vec2 {
     }
 
     static dot(v1: Vec2, v2: Vec2): number {
-        return v1.x * v2.x + v1.y * v2.y;
+        return (v1.x * v2.x) + (v1.y * v2.y);
     }
 
-    static perp(v1: Vec2, v2: Vec2): number{
+    static cross(v1: Vec2, v2: Vec2): number{
         return (v1.x * v2.y) - (v1.y * v2.x);
     }
 
@@ -89,8 +89,40 @@ export class Vec2 {
         this.y *= num;
     }
 
+    scaleMultAdd(num: number, other: Vec2): void{
+        this.x += num * other.x;
+        this.y += num * other.y;
+    }
+
+    scaleMultSub(num: number, other: Vec2): void{
+        this.x -= num * other.x;
+        this.y -= num * other.y;
+    }
+
     scaleDiv(num: number): void{
         this.x /= num;
         this.y /= num;
     }
+
+    // for projection
+    static overlap(v1: Vec2, v2: Vec2): boolean{
+        return v1.max > v2.min && v2.max > v1.min; 
+    }
+
+    set min(num: number){
+        this.x = num;
+    }
+
+    set max(num: number){
+        this.y = num;
+    }
+
+    get min(): number{
+        return this.x;
+    }
+
+    get max(): number{
+        return this.y;
+    }
+
 }

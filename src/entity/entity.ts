@@ -1,162 +1,174 @@
 import { Point } from '../geometry/point.js';
 import { Rectangle } from '../collision/rectangle.js';
 import { Vec2 } from '../geometry/vec2.js';
-import { border_W, border_H } from '../main.js';
 
 
 
 let id: number = 0;
-const TAU = Math.PI * 2;
+export const TAU = Math.PI * 2;
 
-// SAP Theorem
-// https://github.com/danielszabo88/mocorgo/blob/master/15%20-%20Separating%20Axis%20Theorem/script.js
+export abstract class Entity {
+    projection: Vec2 = new Vec2();
 
-// Minimum Translation Vector
-// https://github.com/danielszabo88/mocorgo/blob/master/16%20-%20Minimum%20Translation%20Vector/script.js
-
-// Rotational Collision
-// https://github.com/danielszabo88/mocorgo/blob/master/14%20-%20Rotational%20Collision/script.js
-
-export type Vec2_4 = [Vec2, Vec2, Vec2, Vec2];
-
-export class Entity {
-    projMin = 0;
-    projMax = 0;
-    readonly char: string;
-    pos: Vec2;
+    char: string;
+    pos: Point;
     vel: Vec2;
-    ang: number;
-    angVel: number;
+    ang: number = 0;
+    angVel: number = 0;
     id: number;
-    center: Point;
-    bounding_rect: Rectangle;
-    readonly vertex: Vec2_4;
-    readonly axes: Vec2_4;
-    height: number;
-    width: number;
-    max_side: number;
-    mass: number;
-    inv_inertia: any;
+    bounding_rect: Rectangle = new Rectangle(0, 0, 0, 0);
+    readonly vertex: Vec2[];
+    readonly axes: Vec2[];
+    private _half_height!: number;
+    private _half_width!: number;
+    private _max_side!: number;
+    private _width!: number;
+    private _height!: number;
+    private _mass!: number;
+    private _inv_mass!: number;
+    private _inertia!: number;
+    private _inv_inertia!: number;
     constructor(posX: number, posY: number, velX: number, velY: number, char: string, 
-        width: number, height: number, mass: number
+        width: number, height: number, mass: number, vertex: Vec2[], axes: Vec2[]
     ) {
-        this.height = height;
-        this.width = width;
-        this.max_side = Math.sqrt(width ** 2 + height ** 2); // used for AABB detection
-        this.mass = mass;
-        const inertia = (mass * (width ** 2 + height ** 2)) / 12;
-        this.inv_inertia = 1 / inertia;
-
-        this.char = char;
-        this.pos = new Vec2(posX, posY);
-        this.vel = new Vec2(velX, velY);
-
-        this.ang = 0;
-        this.angVel = 0;
         id += 1;
         this.id = id;
-        this.center = new Point(0, 0, this);
-        this.bounding_rect = new Rectangle(0, 0, 0, 0);
+        this.char = char;
+        this.pos = new Point(posX, posY, this);
+        this.vel = new Vec2(velX, velY);
 
-        this.vertex = [
-            new Vec2(this.pos.x, this.pos.y),
-            new Vec2(this.pos.x + width, this.pos.y),
-            new Vec2(this.pos.x + width, this.pos.y + height),
-            new Vec2(this.pos.x, this.pos.y + height),
-        ];
+        this.vertex = vertex;
+        this.axes = axes;
 
-        this.axes = [new Vec2(), new Vec2(), new Vec2(), new Vec2()];
+        this.mass = mass;
+        this.set_width_height(width, height);
 
-        this.set_vertex();
+        this.update_vertex();
+        this.update_bounding_rectangle()
     }
 
-    set_vertex(): void {
-        this.center.x = this.pos.x + this.width / 2;
-        this.center.y = this.pos.y + this.height / 2;
-
-        const cosA: number = Math.cos(this.ang);
-        const sinA: number = Math.sin(this.ang);
-        const cx: number = this.center.x;
-        const cy: number = this.center.y;
-
-        const rotatePoint = (x: number, y: number, index: number): void => {
-            const dx: number = x - cx;
-            const dy: number = y - cy;
-            this.vertex[index]!.x = dx * cosA - dy * sinA + cx;
-            this.vertex[index]!.y = dx * sinA + dy * cosA + cy;
-        };
-
-        rotatePoint(this.pos.x, this.pos.y, 0);
-        rotatePoint(this.pos.x + this.width, this.pos.y, 1);
-        rotatePoint(this.pos.x + this.width, this.pos.y + this.height, 2);
-        rotatePoint(this.pos.x, this.pos.y + this.height, 3);
-    }
-
-    update(deltaTime: number): void {
-
-        if (this.pos.x > border_W) {
-            this.pos.x = 0;
-        } else if (this.pos.x < 0) {
-            this.pos.x = border_W;
+    set mass(mass: number){
+        if (mass == 0){
+            mass = 1;
+            console.error("Mass Cannot be 0");
         }
-
-        if (this.pos.y > border_H) {
-            this.pos.y = 0;
-        } else if (this.pos.y < 0) {
-            this.pos.y = border_H;
-        }
-
-        this.pos.x += this.vel.x * deltaTime;
-        this.pos.y += this.vel.y * deltaTime;
-
-        this.ang += this.angVel * deltaTime;
-        this.ang %= TAU;
-
-        this.set_vertex();
-        this.set_bounding_rect();
+        this._mass = mass;
+        this._inv_mass = 1 / mass;
     }
 
-    set_bounding_rect(): void {
+    get mass(): number{
+        return this._mass;
+    }
+
+    get inv_mass(): number{
+        return this._inv_mass;
+    }
+
+    calc_inertia(): number{
+        // approximation using formula of a rectange
+        return (this._mass * (this._width ** 2 + this._height ** 2)) / 12;
+    }
+
+    private set_inertia(){
+        const inertia = this.calc_inertia();
+        this._inertia = inertia;
+        this._inv_inertia = 1 / inertia;
+    }
+
+    get inertia(): number{
+        return this._inertia;
+    }
+
+    get inv_inertia(): number{
+        return this._inv_inertia;
+    }
+
+    get width(): number{
+        return this._width;
+    }
+
+    get height(): number{
+        return this._height;
+    }
+
+    set width(width: number){
+        if (width == 0){
+            width = 1;
+            console.error("Width Cannot be 0");
+        }
+        this._width = width;
+        this._half_width = width / 2;
+        this.set_max_side();
+        this.set_inertia();
+    }
+
+    set height(height: number){
+        if (height == 0){
+            height = 1;
+            console.error("Height Cannot be 0");
+        }
+        this._height = height;
+        this._half_height = height / 2;
+        this.set_max_side();
+        this.set_inertia();
+    }
+
+    private set_max_side(){
+        this._max_side = Math.sqrt(this._width ** 2 + this._height ** 2);  // used for AABB detection
+    }
+
+    get max_side(): number{
+        return this._max_side;
+    }
+
+    get half_width(): number{
+        return this._half_width;
+    }
+
+    get half_height(): number{
+        return this._half_height;
+    }
+
+    set_width_height(width: number, height: number){
+        if (width == 0){
+            width = 1;
+            console.error("Width Cannot be 0");
+        }
+        if (height == 0){
+            height = 1;
+            console.error("Height Cannot be 0");
+        }
+        this._width = width;
+        this._half_width = width / 2;
+        this._height = height;
+        this._half_height = height / 2;
+        this.set_max_side();
+        this.set_inertia();
+    }
+
+    // for quadtree
+    update_bounding_rectangle(): void {
         this.bounding_rect.set_rect(
-            this.center.x,
-            this.center.y,
-            this.max_side * 2,
-            this.max_side * 2
+            this.pos.x,
+            this.pos.y,
+            this._max_side * 2,
+            this._max_side * 2
         );
     }
 
-    //Compute 4 SAT axes into pre-allocated this.axes and rectB.axes.
-    computeAxes(rectB: Entity): void {
-        const a = this.vertex;
-        const b = rectB.vertex;
-
-        const ax0 = this.axes[0];
-        const ax1 = this.axes[1];
-        const ax2 = rectB.axes[0];
-        const ax3 = rectB.axes[1];
-
-        ax0.subtrTo(a[1], a[0]);
-        ax0.normalMut();
-
-        ax1.subtrTo(a[2], a[1]);
-        ax1.normalMut();
-
-        ax2.subtrTo(b[1], a[0]);
-        ax2.normalMut();
-
-        ax3.subtrTo(b[2], a[1]);
-        ax3.normalMut();
-    }
-
     projectInto(axis: Vec2): void {
-        let min: number = Vec2.dot(axis, this.vertex[0]);
-        let max: number = min;
-        for (let i: number = 1; i < this.vertex.length; i++) {
-            const p: number = Vec2.dot(axis, this.vertex[i]!);
+        let min: number = Infinity;
+        let max: number = -Infinity;
+        for(const vertex of this.vertex){
+            const p: number = Vec2.dot(axis, vertex);
             if (p < min) min = p;
             if (p > max) max = p;
         }
-        this.projMin = min;
-        this.projMax = max;
+        this.projection.min = min;
+        this.projection.max = max;
     }
+
+    abstract update_vertex(): void
+    abstract update(deltaTime: number): void 
+    abstract computeAxes(rectB: Entity): void
 }

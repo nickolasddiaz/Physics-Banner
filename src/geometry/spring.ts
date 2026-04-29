@@ -27,26 +27,33 @@ export class SpringConnection{
     }
 
     updateSpring(deltaTime: number): void {
+        const damping = Math.pow(DAMPING, deltaTime);
+
         force.subtrTo(this.sp1.pos, this.sp2.pos);
         const distanceN = this.sp1.pos.distanceFrom(this.sp2.pos) || 1; // Prevent division by zero
 
         // Hooke's law: pull stretched springs together, push compressed springs apart
         const forceN = (this.restLength - distanceN) * STIFFNESS;
 
+        // force = distanceN / (restlenght - distanceN)
+
         force.scaleDiv(distanceN);
         force.scaleMult(forceN * 0.5);
 
+        // point 1
+        // velocity -= force
+        // velocity *= damping
+        // position += velocity * deltaTime
         this.sp1.vel.add(force);
-        this.sp2.vel.sub(force);
-
-        const damping = Math.pow(DAMPING, deltaTime);
         this.sp1.vel.scaleMult(damping);
-        this.sp2.vel.scaleMult(damping);
-
         posChange.set(this.sp1.vel);
         posChange.scaleMult(deltaTime);
         this.sp1.pos.add(posChange);
+        
 
+        // point 2
+        this.sp2.vel.sub(force);
+        this.sp2.vel.scaleMult(damping);
         posChange.set(this.sp2.vel);
         posChange.scaleMult(deltaTime);
         this.sp2.pos.add(posChange);

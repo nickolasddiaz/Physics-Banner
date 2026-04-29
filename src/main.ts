@@ -1,11 +1,12 @@
 import {Entity} from './entity/entity.js';
 import {canvas, ctx, ascii_art, generateRandomCharacter, min_frame_rate, height} from './const.js'
 import { checkCollision } from './collision/checkCollision.js';
-import { draw_SP, render } from './draw/draw.js';
+import { render } from './draw/draw.js';
 import { QuadTree } from './collision/quadtree.js';
 import type { Point } from './geometry/point.js';
 import { Rectangle } from './collision/rectangle.js';
 import { SpringConnection, SpringPoint } from './geometry/spring.js';
+import { RigidBody } from './entity/rigidbody.js';
 
 const entities: Entity[] = []
 
@@ -24,7 +25,7 @@ const RANDOM_SPEED = 80;
 for (const [y, linesArray] of ascii_art.split(/\r?\n/).entries()){
     for (const [x, char] of linesArray.split('').entries()) {
         if (!isWhitespace(char)){
-            entities.push(new Entity(x * (width  + 1) + 60, y * (height + 1) + 100, 0, 0, char, width, height, 1));
+            entities.push(new RigidBody(x * (width  + 1) + 60, y * (height + 1) + 100, 0, 0, char, width, height, 1));
         }
     }
 }
@@ -35,7 +36,7 @@ function spawn_entity(): void{
     const x: number = Math.cos(randomRadian) * 2;
     const y: number = Math.sin(randomRadian) * 2;
 
-    entities.push(new Entity(x* canvas_width, y * canvas_height, 
+    entities.push(new RigidBody(x* canvas_width, y * canvas_height, 
         x* RANDOM_SPEED, y * RANDOM_SPEED, 
         generateRandomCharacter(), width, height, 8));
 }
@@ -52,20 +53,6 @@ const bounding_rect = new Rectangle(canvas_width / 2, canvas_height / 2, canvas_
 let quadTree: QuadTree = QuadTree.create(bounding_rect);
 
 
-const p1: SpringPoint = new SpringPoint(25, 25);
-const p2: SpringPoint = new SpringPoint(50, 25);
-const p3: SpringPoint = new SpringPoint(25, 50);
-const p4: SpringPoint = new SpringPoint(50, 50);
-
-const springs: SpringConnection[] = [
-    new SpringConnection(p1, p2),
-    new SpringConnection(p1, p3),
-    new SpringConnection(p1, p4),
-    new SpringConnection(p2, p3),
-    new SpringConnection(p2, p4),
-    new SpringConnection(p3, p4),
-]
-
 
 
 function update(currentTime: number) {
@@ -75,38 +62,29 @@ function update(currentTime: number) {
     ctx.clearRect(0, 0, canvas_width, canvas_height);
     ctx.reset();
 
-    for(const spring of springs){
-        spring.updateSpring(deltaTime);
+
+    for (const entity of entities) {
+        entity.update(deltaTime);
+        render(entity, ctx);
     }
 
-    for(const spring of springs){
-        draw_SP(spring, ctx);
+    quadTree.clear();
+
+    for(const entity of entities){
+        quadTree.insert(entity.pos);
     }
-
-    p1.pos.x += deltaTime;
-
-    // for (const entity of entities) {
-    //     entity.update(deltaTime);
-    //     render(entity, ctx);
-    // }
-
-    // quadTree.clear();
-
-    // for(const entity of entities){
-    //     quadTree.insert(entity.center);
-    // }
     
-    // for (const entityA of entities) {
-    //     const points: Point[] = quadTree.query(entityA.bounding_rect);
-    //     if (points.length === 1) continue;
+    for (const entityA of entities) {
+        const points: Point[] = quadTree.query(entityA.bounding_rect);
+        if (points.length === 1) continue;
 
-    //     for (const point of points) {
-    //         const entityB: Entity = point.userData;
-    //         if (entityA.id < entityB.id) {
-    //             checkCollision(entityA, entityB);
-    //         }
-    //     }
-    // }
+        for (const point of points) {
+            const entityB: Entity = point.userData;
+            if (entityA.id < entityB.id) {
+                checkCollision(entityA, entityB);
+            }
+        }
+    }
 
     requestAnimationFrame(update);
 }
