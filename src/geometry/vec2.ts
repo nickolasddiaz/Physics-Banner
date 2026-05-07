@@ -125,4 +125,7 @@ export class Vec2 {
         return this.y;
     }
 
+    get dist(): number{
+        return Math.abs(this.max - this.min);
+    }
 }

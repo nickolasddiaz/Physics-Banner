@@ -1,14 +1,13 @@
-import {Entity} from './entity/entity.js';
+import {PhysicsObject} from './entity/PhysicsObject.js';
 import {canvas, ctx, ascii_art, generateRandomCharacter, min_frame_rate, height} from './const.js'
 import { checkCollision } from './collision/checkCollision.js';
 import { render } from './draw/draw.js';
 import { QuadTree } from './collision/quadtree.js';
 import type { Point } from './geometry/point.js';
 import { Rectangle } from './collision/rectangle.js';
-import { SpringConnection, SpringPoint } from './geometry/spring.js';
 import { RigidBody } from './entity/rigidbody.js';
 
-const entities: Entity[] = []
+const entities: PhysicsObject[] = []
 
 function isWhitespace(char: string): boolean {
     return /\s/.test(char);
@@ -79,7 +78,7 @@ function update(currentTime: number) {
         if (points.length === 1) continue;
 
         for (const point of points) {
-            const entityB: Entity = point.userData;
+            const entityB: PhysicsObject = point.userData;
             if (entityA.id < entityB.id) {
                 checkCollision(entityA, entityB);
             }

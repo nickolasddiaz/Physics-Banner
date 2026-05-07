@@ -1,6 +1,4 @@
 // Quadtree
-// https://github.com/CodingTrain/QuadTree/blob/main/quadtree.js
-
 import type { Point } from '../geometry/point.js';
 import type { Rectangle } from './rectangle.js';
 

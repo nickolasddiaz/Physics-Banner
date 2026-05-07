@@ -1,22 +1,18 @@
-import { Entity } from '../entity/entity.js';
-import { charCache } from '../const.js';
-import type { SpringConnection } from '../geometry/spring.js';
+import { PhysicsObject } from '../entity/PhysicsObject.js';
 
+export function render(entity: PhysicsObject, ctx: CanvasRenderingContext2D): void {
+    ctx.beginPath();
+    const vertex = entity.vertices;
+    ctx.moveTo(vertex[0]!.x, vertex[0]!.y);
 
-export function render(entity: Entity, ctx: CanvasRenderingContext2D): void {
-    const sprite: OffscreenCanvas = charCache.get(entity.char)!;
-    const cos: number = Math.cos(entity.ang);
-    const sin: number = Math.sin(entity.ang);
+    for(let i = 1; i < vertex.length; i++){
+        ctx.lineTo(vertex[i]!.x, vertex[i]!.y);
+    }
 
-    ctx.setTransform(cos, sin, -sin, cos, entity.pos.x, entity.pos.y);
-    ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+    ctx.closePath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'blue';
+    ctx.stroke();
 
-
+    entity.bounding_rect.draw(ctx);
 }
-
-// function draw_SP(sp: SpringConnection, ctx: CanvasRenderingContext2D): void{
-//     ctx.beginPath();
-//     ctx.moveTo(sp.sp1.pos.x, sp.sp1.pos.y);
-//     ctx.lineTo(sp.sp2.pos.x, sp.sp2.pos.y);
-//     ctx.stroke();
-// }

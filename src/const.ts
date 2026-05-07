@@ -32,7 +32,7 @@ export function generateRandomCharacter(): string {
 //                 ╚══╝                                                                                                                                                 
 // `;
 
-export const ascii_art: string = "test";
+export const ascii_art: string = "t";
 
 
 export const charCache: Map<string, OffscreenCanvas> = new Map();
