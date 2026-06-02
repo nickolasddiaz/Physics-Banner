@@ -1,29 +1,29 @@
 {
   "compilerOptions": {
-    "rootDir": "./src/",
-    "outDir": "./dist/",
-
-    "module": "esnext",
     "target": "ESNext",
+    "module": "esnext",
+    "lib": ["ES2022", "DOM"],
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+    "allowJs": false,
+    "strict": true,
+
+    /* Bundler mode */
     "moduleResolution": "bundler",
-    "types": [],
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
 
-    "sourceMap": false,
-    "declaration": false,
-    "declarationMap": false,
-
+    /* Linting */
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
-    "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
-    "allowJs": false
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["./src/**/*", "./img/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src"]
 }
+

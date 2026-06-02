@@ -14,5 +14,11 @@ export function render(entity: PhysicsObject, ctx: CanvasRenderingContext2D): vo
     ctx.strokeStyle = 'blue';
     ctx.stroke();
 
+    ctx.beginPath();
+    ctx.strokeStyle = 'purple';
+    ctx.arc(entity.pos.x, entity.pos.y, 10, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.closePath();
+
     entity.bounding_rect.draw(ctx);
 }

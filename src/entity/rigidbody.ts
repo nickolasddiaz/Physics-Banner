@@ -2,6 +2,7 @@ import { PhysicsObject, TAU } from './PhysicsObject.js';
 
 import { border_W, border_H } from '../main.js';
 import { Vec2 } from '../geometry/vec2.js';
+import getpolygon from '../test.js';
 
 
 export class RigidBody extends PhysicsObject{
@@ -11,12 +12,14 @@ export class RigidBody extends PhysicsObject{
     constructor(posX: number, posY: number, velX: number, velY: number, char: string,
         width: number, height: number, mass: number
     ){
-        const vertex: Vec2[] = [
-            new Vec2(width, height), 
-            new Vec2(-width, height), 
-            new Vec2(-width, -height), 
-            new Vec2(width, -height)
-        ];
+        // const vertex: Vec2[] = [
+        //     new Vec2(width, height), 
+        //     new Vec2(-width, height), 
+        //     new Vec2(-width, -height), 
+        //     new Vec2(width, -height)
+        // ];
+        const vertex = getpolygon(char);
+
         super(posX, posY, char, mass, vertex);
 
         this.vel = new Vec2(velX, velY);

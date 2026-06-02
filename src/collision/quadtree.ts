@@ -126,7 +126,7 @@ export class QuadTree {
         }
 
         for (const p of this.points) {
-            if (range.contains(p)) {
+            if (range.intersects(p.userData.bounding_rect)) {
                 found.push(p);
             }
         }
