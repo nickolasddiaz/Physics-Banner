@@ -1,6 +1,6 @@
 // Quadtree
-import type { Point } from '../geometry/point.js';
-import type { Rectangle } from './rectangle.js';
+import type Point from '../geometry/point.js';
+import type Rectangle from './rectangle.js';
 
 
 export type Quadrant = number;

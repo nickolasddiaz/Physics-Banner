@@ -1,4 +1,4 @@
-export class Vec2 {
+export default class Vec2 {
     public x: number;
     public y: number;
     constructor(x: number = 0, y: number = 0) {
@@ -104,6 +104,15 @@ export class Vec2 {
         this.y /= num;
     }
 
+    static orientation(a: Vec2, b: Vec2, c: Vec2): number {
+        const v = a.x * (b.y - c.y) + 
+                b.x * (c.y - a.y) + 
+                c.x * (a.y - b.y);
+        if (v < 0) return -1;  // clockwise
+        if (v > 0) return +1;  // counter-clockwise
+        return 0;              // collinear
+    }
+
     // for projection
     static overlap(v1: Vec2, v2: Vec2): boolean{
         return v1.max > v2.min && v2.max > v1.min; 
@@ -128,4 +137,8 @@ export class Vec2 {
     get dist(): number{
         return Math.abs(this.max - this.min);
     }
+
+    clone(): Vec2 {
+    return new Vec2(this.x, this.y);
+  }
 }

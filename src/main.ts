@@ -1,43 +1,37 @@
-import {PhysicsObject} from './entity/PhysicsObject.js';
-import {canvas, ctx, ascii_art, generateRandomCharacter, min_frame_rate, height} from './const.js'
-import { checkCollision } from './collision/checkCollision.js';
-import { render } from './draw/draw.js';
+import PhysicsObject from './PhysicsObject/PhysicsObject.js';
+import { checkCollision } from './PhysicsObject/checkCollision.js';
 import { QuadTree } from './collision/quadtree.js';
-import type { Point } from './geometry/point.js';
-import { Rectangle } from './collision/rectangle.js';
-import { RigidBody } from './entity/rigidbody.js';
+import type Point from './geometry/point.js';
+import Rectangle from './collision/rectangle.js';
+import polygonFromChar from './font/PolygonCache.js';
 
-const entities: PhysicsObject[] = []
+export const canvas: HTMLCanvasElement = document.getElementById('pinballCanvas') as HTMLCanvasElement;
+export const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-function isWhitespace(char: string): boolean {
-    return /\s/.test(char);
-}
+const entities: PhysicsObject[] = [];
+
+export const charCache: polygonFromChar = new polygonFromChar();
 
 
-const width = height * 0.60;
 export const canvas_width = 400;
 export const canvas_height = 400;
-export const border_W = canvas_width + 10;
-export const border_H = canvas_height + 10;
+export const border_W = canvas_width;
+export const border_H = canvas_height;
 const RANDOM_SPEED = 80;
 
-for (const [y, linesArray] of ascii_art.split(/\r?\n/).entries()){
-    for (const [x, char] of linesArray.split('').entries()) {
-        if (!isWhitespace(char)){
-            entities.push(new RigidBody(x * (width  + 1) + 60, y * (height + 1) + 100, 0, 0, char, width, height, 1));
-        }
-    }
+const characters: string = 'abcdef';
+function generateRandomCharacter(): string {
+   const randomIndex: number = Math.floor(Math.random() * characters.length);
+   return characters.charAt(randomIndex);
 }
-
 
 function spawn_entity(): void{
     const randomRadian: number = Math.random() * 2 * Math.PI;
     const x: number = Math.cos(randomRadian) * 2;
     const y: number = Math.sin(randomRadian) * 2;
 
-    entities.push(new RigidBody(x* canvas_width, y * canvas_height, 
-        x* RANDOM_SPEED, y * RANDOM_SPEED, 
-        generateRandomCharacter(), width, height, 8));
+    entities.push(new PhysicsObject(x* canvas_width, y * canvas_height, generateRandomCharacter(),
+        x * RANDOM_SPEED, y * RANDOM_SPEED, 1, 36));
 }
 
 
@@ -55,6 +49,7 @@ let quadTree: QuadTree = QuadTree.create(bounding_rect);
 
 
 function update(currentTime: number) {
+    const min_frame_rate: number = 1 / 16;
     const deltaTime: number = Math.min((currentTime - lastTime) / 1000, min_frame_rate);
     lastTime = currentTime;
 
@@ -64,13 +59,14 @@ function update(currentTime: number) {
 
     for (const entity of entities) {
         entity.update(deltaTime);
-        render(entity, ctx);
+        entity.debug_render(ctx);
+        entity.render(ctx, charCache);
     }
 
     quadTree.clear();
 
     for(const entity of entities){
-        quadTree.insert(entity.pos);
+        quadTree.insert(entity.center_pos);
     }
     
     for (const entityA of entities) {

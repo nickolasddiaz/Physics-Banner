@@ -1,8 +1,8 @@
 import { bottom_left, bottom_right, top_left, top_right, type Quadrant } from "./quadtree.js";
-import type { Point } from "../geometry/point.js";
+import type Point from "../geometry/point.js";
 
 
-export class Rectangle {
+export default class Rectangle {
     private x: number;
     private y: number;
     private w: number;
@@ -94,7 +94,7 @@ export class Rectangle {
         return dx * dx + dy * dy;
     }
 
-    draw(ctx: CanvasRenderingContext2D){
+    debug_draw(ctx: CanvasRenderingContext2D){
         ctx.beginPath();
         ctx.strokeStyle = 'red';
         ctx.strokeRect(this.left, this.top, this.w, this.h);
