@@ -1,39 +1,49 @@
 import opentype from 'opentype.js';
 import Vec2 from "../geometry/vec2";
-import fontUrl from './NotoEmoji-VariableFont_wght.ttf?url';
-
-async function initFont(): Promise<opentype.Font> {
-    const response = await fetch(fontUrl);
-    if (!response.ok) {
-        throw new Error(`Failed to load font: ${response.status} ${response.statusText}`);
-    }
-    const buffer = await response.arrayBuffer();
-    return opentype.parse(buffer);  
-}
-
-const font = await initFont();
 
 export default class PolygonCache {
     private polyCache: Record<string, readonly Vec2[]> = {}
     private charCache: Map<string, OffscreenCanvas> = new Map();
+    public size: number;
+    private fontLoader!: opentype.Font;
+
+    constructor(size: number, font_url: URL){
+        this.size = size;
+
+        this.initFont(font_url).then(font => {
+            this.fontLoader = font;
+        });
+    }
+
+    private async initFont(fontURL: URL): Promise<opentype.Font> {
+        const response = await fetch(fontURL);
+        if (!response.ok) {
+            throw new Error(`Failed to load font: ${response.status} ${response.statusText}`);
+        }
+        const buffer = await response.arrayBuffer();
+        return opentype.parse(buffer);  
+    }
 
 
-    public getPolygon(char: string, size: number): readonly Vec2[]{
+    public getPolygon(char: string): readonly Vec2[]{
         // returns counter-clockwise vertices
 
         if (!(char in this.polyCache)){
-            var polygon = this.polygonFromFont(char); // size is 1
+            var polygon = this.polygonFromFont(char);
             var convexPolygon = this.convexHull(polygon);
             this.polyCache[char] = convexPolygon;
         } 
 
-        return this.polyCache[char]!.map(num => new Vec2(num.x * size, num.y * size)); // make a copy of the list
+        return this.polyCache[char]!.map(num => new Vec2(num.x, num.y)); // make a copy of the list
     }
 
     // https://github.com/opentypejs/opentype.js
     // https://opentype.js.org/
     private polygonFromFont(char: string): Vec2[] {
-        const path: opentype.Path = font.getPath(char, 0, 0, 1);
+        if (!this.fontLoader) {
+            throw new Error("Font has not finished loading");
+        }
+        const path: opentype.Path = this.fontLoader.getPath(char, 0, 0, this.size);
         const coords: Vec2[] = [];
 
         // https://www.w3schools.com/graphics/svg_path.asp 
@@ -69,7 +79,6 @@ export default class PolygonCache {
             pt.y -= centerY;
         }
 
-
         return coords;
     }
 
@@ -77,8 +86,6 @@ export default class PolygonCache {
     // https://www.geeksforgeeks.org/dsa/convex-hull-using-graham-scan/
     private convexHull(points: Vec2[]): Vec2[] {
         if (points.length < 3) throw("Hull not possible: fewer than 3 points");
-    
-
     
         // Find the point with the lowest y-coordinate (and leftmost if tie)
         const p0: Vec2 = points.reduce((min, p) => 
@@ -136,16 +143,22 @@ export default class PolygonCache {
         if(char in this.charCache)
             return this.charCache.get(char)!;
 
-        var size = 32;
-        const offCanvas:  OffscreenCanvas = new OffscreenCanvas(size * 2, size * 2);
+        const offCanvas:  OffscreenCanvas = new OffscreenCanvas(this.size * 2, this.size * 2);
         const oCtx: OffscreenCanvasRenderingContext2D = offCanvas.getContext('2d')!;
 
-        oCtx.font = `${size}px monospace`;
-        oCtx.fillStyle = 'blue';
-        oCtx.textAlign = 'center';
-        oCtx.textBaseline = 'middle';
+        const path = this.fontLoader.getPath(char, 0, 0, this.size);
+        const bounds = path.getBoundingBox();
+        const canvasCenter = this.size;
+        const x = canvasCenter - (bounds.x1 + bounds.x2) / 2;
+        const y = canvasCenter - (bounds.y1 + bounds.y2) / 2;
 
-        oCtx.fillText(char, size, size);
+        this.fontLoader.draw(
+            oCtx as unknown as CanvasRenderingContext2D,
+            char,
+            x,
+            y,
+            this.size
+        );
         this.charCache.set(char, offCanvas);
         return offCanvas;
     }

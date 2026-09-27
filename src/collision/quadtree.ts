@@ -5,7 +5,7 @@ import type Rectangle from './rectangle.js';
 
 export type Quadrant = number;
 
-const DEFAULT_CAPACITY: number = 16;
+const DEFAULT_CAPACITY: number = 8;
 const MAX_DEPTH: number = 8;
 
 export const top_left: Quadrant = 0;
@@ -15,7 +15,7 @@ export const bottom_right: Quadrant = 3;
 
 
 export class QuadTree {
-    private boundary: Rectangle;
+    public boundary: Rectangle;
     private capacity: number;
     private points: Point[];
     private divided: boolean;
@@ -33,13 +33,13 @@ export class QuadTree {
         this.depth = _depth;
     }
 
-    get children(): (QuadTree | undefined)[] {
+    get children(): (QuadTree)[] {
         if (this.divided) {
             return [
-                this.top_left,
-                this.top_right,
-                this.bottom_left,
-                this.bottom_right
+                this.top_left!,
+                this.top_right!,
+                this.bottom_left!,
+                this.bottom_right!
             ];
         } else {
             return [];
@@ -180,5 +180,17 @@ export class QuadTree {
         }
 
         return this.points.length;
+    }
+
+    debug_render(ctx: CanvasRenderingContext2D){
+
+        this.boundary.debug_render(ctx);
+
+        if(this.divided){
+            this.top_left!.debug_render(ctx);
+            this.top_right!.debug_render(ctx);
+            this.bottom_left!.debug_render(ctx);
+            this.bottom_right!.debug_render(ctx);
+        }
     }
 }

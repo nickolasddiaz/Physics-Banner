@@ -29,7 +29,7 @@ const mtvAxis = new Vec2();
 // Rotational Collision
 // https://github.com/danielszabo88/mocorgo/blob/master/14%20-%20Rotational%20Collision/script.js
 
-export function checkCollision(objectA: PhysicsObject, objectB: PhysicsObject): void {
+export default function checkCollision(objectA: PhysicsObject, objectB: PhysicsObject): void {
         // passed AABB detection
         // starting SAT detection
 

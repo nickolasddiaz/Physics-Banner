@@ -1,7 +1,6 @@
 import Point from '../geometry/point.js';
 import Rectangle from '../collision/rectangle.js';
 import Vec2 from '../geometry/vec2.js';
-import { border_H, border_W, charCache } from '../main.js';
 import type PolygonCache from '../font/PolygonCache.js';
 
 
@@ -28,13 +27,13 @@ export default class PhysicsObject {
     vel: Vec2;
     angVel: number = 0.0;
     ang: number = 0.0;
-    constructor(posX: number, posY: number, char: string , velX: number, velY: number, mass: number, size: number) {
+    constructor(posX: number, posY: number, char: string , velX: number, velY: number, mass: number, polygons: readonly Vec2[]) {
         id += 1;
         this.id = id;
         this.char = char;
         this.center_pos = new Point(posX, posY, this);
 
-        this.polygon = charCache.getPolygon(char, size);
+        this.polygon = polygons;
         this.vertices = this.polygon.map(vec => vec.clone());
         this.vel = new Vec2(velX, velY);
 
@@ -94,7 +93,7 @@ export default class PhysicsObject {
 
     // for quadtree
     private update_bounding_rectangle(): void {
-        this.bounding_rect.set_rect(
+        this.bounding_rect.set_rect_using_max(
             this.sizeX.min,
             this.sizeX.max,
             this.sizeY.min,
@@ -102,21 +101,26 @@ export default class PhysicsObject {
         );
     }
 
-    // private enforce_looping(){
-    //     if (this.pos.x > border_W) {
-    //         this.pos.x = 0;
-    //     } else if (this.pos.x < 0) {
-    //         this.pos.x = border_W;
-    //     }
+    public apply_gravity(gravity_delta: number){
+        this.vel.x += gravity_delta;
+        this.vel.y += gravity_delta;
+    }
 
-    //     if (this.pos.y > border_H) {
-    //         this.pos.y = 0;
-    //     } else if (this.pos.y < 0) {
-    //         this.pos.y = border_H;
-    //     }
-    // }
+    public enforce_looping(border_W: number, border_H: number){
+        if (this.center_pos.x > border_W) {
+            this.center_pos.x = 0;
+        } else if (this.center_pos.x < 0) {
+            this.center_pos.x = border_W;
+        }
 
-    private enforce_container(){
+        if (this.center_pos.y > border_H) {
+            this.center_pos.y = 0;
+        } else if (this.center_pos.y < 0) {
+            this.center_pos.y = border_H;
+        }
+    }
+
+    public enforce_container(border_W: number, border_H: number){
         if (this.center_pos.x > border_W) {
             this.vel.x = -Math.abs(this.vel.x);
         } else if (this.center_pos.x < 0) {
@@ -131,9 +135,6 @@ export default class PhysicsObject {
     }
 
     update(deltaTime: number): void {
-        this.enforce_container();
-        // this.enforce_looping();
-
         this.center_pos.x += this.vel.x * deltaTime;
         this.center_pos.y += this.vel.y * deltaTime;
 
@@ -209,7 +210,7 @@ export default class PhysicsObject {
         ctx.strokeStyle = 'blue';
         ctx.stroke();
 
-        this.bounding_rect.debug_draw(ctx);
+        this.bounding_rect.debug_render(ctx);
     }
 
     render(ctx: CanvasRenderingContext2D, charCache: PolygonCache): void {

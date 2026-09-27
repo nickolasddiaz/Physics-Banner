@@ -3,15 +3,19 @@ import type Point from "../geometry/point.js";
 
 
 export default class Rectangle {
-    private x: number;
-    private y: number;
-    private w: number;
-    private h: number;
-    private left: number;
-    private right: number;
-    private top: number;
-    private bottom: number;
+    private x!: number;
+    private y!: number;
+    private w!: number;
+    private h!: number;
+    private left!: number;
+    private right!: number;
+    private top!: number;
+    private bottom!: number;
     constructor(x: number = 0, y: number = 0, w: number = 0, h: number = 0) {
+        this.set_rect(x, y, w, h);
+    }
+
+    set_rect(x: number, y: number, w: number, h: number ){
         this.x = x;
         this.y = y;
         this.w = w;
@@ -23,7 +27,7 @@ export default class Rectangle {
         this.bottom = y + h / 2;
     }
 
-    set_rect(min_x: number, max_x: number, min_y: number, max_y: number): void{
+    set_rect_using_max(min_x: number, max_x: number, min_y: number, max_y: number): void{
         this.x = min_x;
         this.y = min_y;
         this.w = max_x - min_x;
@@ -94,7 +98,7 @@ export default class Rectangle {
         return dx * dx + dy * dy;
     }
 
-    debug_draw(ctx: CanvasRenderingContext2D){
+    debug_render(ctx: CanvasRenderingContext2D){
         ctx.beginPath();
         ctx.strokeStyle = 'red';
         ctx.strokeRect(this.left, this.top, this.w, this.h);
