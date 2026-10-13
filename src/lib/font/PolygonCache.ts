@@ -16,7 +16,7 @@ export default class PolygonCache {
         this.color = color;
     }
 
-    public async initFont(fontURL: URL) {
+    public async initFont(fontURL: string) {
         const response = await fetch(fontURL);
         if (!response.ok) {
             throw new Error(`Failed to load font: ${response.status} ${response.statusText}`);

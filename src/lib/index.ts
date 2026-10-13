@@ -26,10 +26,9 @@ export default class PhysicsBanner{
     private gravity: number = 0.0;
     private debug: boolean = false; 
     private segmenter: Intl.Segmenter;
-    private font_url: URL;
+    private font_url: string;
 
-    constructor(canvas: HTMLCanvasElement, color: string = 'black', font_size: number = 36, segmenter: string = 'en',
-        font_url: URL = new URL('./assets/fonts/NotoSansDisplay.woff', import.meta.url)
+    constructor(canvas: HTMLCanvasElement, font_url: string, color: string = 'black', font_size: number = 36, segmenter: string = 'en'
     ){
         this.charCache = new PolygonCache(font_size, color);
         this.font_url = font_url;
@@ -282,37 +281,3 @@ export default class PhysicsBanner{
         this.animationFrameId = requestAnimationFrame(this.update.bind(this));
     }
 }
-
-
-
-const canvas: HTMLCanvasElement = document.getElementById('Canvas') as HTMLCanvasElement;
-
-let physics_banner = new PhysicsBanner(canvas, 'green', 24);
-await physics_banner.setup();
-// physics_banner.enable_debug(true);
-physics_banner.enable_bounds(true);
-
-// https://texteditor.com/ascii-art/ pipes
-// const ascii_art: string = `
-//     ╔╗╔╗╔╗    ╔╗                 
-//     ║║║║║║    ║║                 
-//     ║║║║║║╔══╗║║ ╔══╗╔══╗╔╗╔╗╔══╗
-//     ║╚╝╚╝║║╔╗║║║ ║╔═╝║╔╗║║╚╝║║╔╗║
-//     ╚╗╔╗╔╝║║═╣║╚╗║╚═╗║╚╝║║║║║║║═╣
-//      ╚╝╚╝ ╚══╝╚═╝╚══╝╚══╝╚╩╩╝╚══╝
-                             
-//  ╔╗                             ╔╗     
-// ╔╝╚╗                           ╔╝╚╗    
-// ╚╗╔╝╔══╗    ╔╗╔╗╔╗ ╔╗    ╔══╗╔╗╚╗╔╝╔══╗
-//  ║║ ║╔╗║    ║╚╝║║║ ║║    ║══╣╠╣ ║║ ║╔╗║
-//  ║╚╗║╚╝║    ║║║║║╚═╝║    ╠══║║║ ║╚╗║║═╣
-//  ╚═╝╚══╝    ╚╩╩╝╚═╗╔╝    ╚══╝╚╝ ╚═╝╚══╝
-//                 ╔═╝║                   
-//                 ╚══╝                                                                                                                                                 
-// `;
-
-const ascii_art = `testa|shdfj|lasdhfjasldfwqertprweut
-adsf|asf
-`;
-
-physics_banner.spawn_string(ascii_art, 0.5, 0.5, "center");
