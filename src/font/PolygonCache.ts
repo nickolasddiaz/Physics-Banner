@@ -3,47 +3,66 @@ import Vec2 from "../geometry/vec2";
 
 export default class PolygonCache {
     private polyCache: Record<string, readonly Vec2[]> = {}
-    private charCache: Map<string, OffscreenCanvas> = new Map();
-    public size: number;
-    private fontLoader!: opentype.Font;
+    private widthCache: Record<string, number> = {}
+    private heightCache: Record<string, number> = {}
+    public lineHeight!: number;
+    private charCache: Map<string, Readonly<OffscreenCanvas>> = new Map();
+    public fontsize: number;
+    private font!: opentype.Font;
+    private color: string;
 
-    constructor(size: number, font_url: URL){
-        this.size = size;
-
-        this.initFont(font_url).then(font => {
-            this.fontLoader = font;
-        });
+    constructor(size: number, color: string){
+        this.fontsize = size;
+        this.color = color;
     }
 
-    private async initFont(fontURL: URL): Promise<opentype.Font> {
+    public async initFont(fontURL: URL) {
         const response = await fetch(fontURL);
         if (!response.ok) {
             throw new Error(`Failed to load font: ${response.status} ${response.statusText}`);
         }
         const buffer = await response.arrayBuffer();
-        return opentype.parse(buffer);  
+        this.font = opentype.parse(buffer);  
+
+        const scale = this.fontsize / this.font.unitsPerEm;
+        const lineGap = this.font.tables.os2?.sTypoLineGap ?? this.font.tables.hhea?.lineGap ?? 0;
+        this.lineHeight = ( this.font.ascender - this.font.descender + lineGap) * scale;
+    }
+
+    private setPolygon(char: string): void{
+        if (!(char in this.polyCache)){
+            var polygon = this.polygonFromFont(char);
+            var convexPolygon = this.convexHull(polygon);
+            this.polyCache[char] = convexPolygon;
+        } 
     }
 
 
     public getPolygon(char: string): readonly Vec2[]{
         // returns counter-clockwise vertices
 
-        if (!(char in this.polyCache)){
-            var polygon = this.polygonFromFont(char);
-            var convexPolygon = this.convexHull(polygon);
-            this.polyCache[char] = convexPolygon;
-        } 
+       this.setPolygon(char);
 
         return this.polyCache[char]!.map(num => new Vec2(num.x, num.y)); // make a copy of the list
+    }
+
+    public getCharacterWidth(char: string): number{
+        this.setPolygon(char);
+        return this.widthCache[char]!;
+    }
+
+    public getCharacterHeight(char: string): number{
+        this.setPolygon(char);
+        return this.heightCache[char]!;
     }
 
     // https://github.com/opentypejs/opentype.js
     // https://opentype.js.org/
     private polygonFromFont(char: string): Vec2[] {
-        if (!this.fontLoader) {
-            throw new Error("Font has not finished loading");
+        if (!this.font) {
+            throw new Error("Font has not finished loading: call await physics_banner.setup() first");
         }
-        const path: opentype.Path = this.fontLoader.getPath(char, 0, 0, this.size);
+        const path: opentype.Path = this.font.getPath(char, 0, 0, this.fontsize);
         const coords: Vec2[] = [];
 
         // https://www.w3schools.com/graphics/svg_path.asp 
@@ -70,6 +89,9 @@ export default class PolygonCache {
             minY = Math.min(pt.y, minY);
             maxY = Math.max(pt.y, maxY);
         }
+
+        this.widthCache[char] = this.font.getAdvanceWidth(char, this.fontsize);
+        this.heightCache[char] = (maxY - minY);
 
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
@@ -139,25 +161,27 @@ export default class PolygonCache {
         return st;
     }
 
-    getCanvas(char: string): OffscreenCanvas{
-        if(char in this.charCache)
+    getCanvas(char: string): Readonly<OffscreenCanvas> {
+        if (this.charCache.has(char))
             return this.charCache.get(char)!;
 
-        const offCanvas:  OffscreenCanvas = new OffscreenCanvas(this.size * 2, this.size * 2);
+        const offCanvas:  OffscreenCanvas = new OffscreenCanvas(this.fontsize * 2, this.fontsize * 2);
         const oCtx: OffscreenCanvasRenderingContext2D = offCanvas.getContext('2d')!;
 
-        const path = this.fontLoader.getPath(char, 0, 0, this.size);
+        const path = this.font.getPath(char, 0, 0, this.fontsize);
         const bounds = path.getBoundingBox();
-        const canvasCenter = this.size;
+        const canvasCenter = this.fontsize;
         const x = canvasCenter - (bounds.x1 + bounds.x2) / 2;
         const y = canvasCenter - (bounds.y1 + bounds.y2) / 2;
 
-        this.fontLoader.draw(
+        oCtx.fillStyle = this.color;
+
+        this.font.draw(
             oCtx as unknown as CanvasRenderingContext2D,
             char,
             x,
             y,
-            this.size
+            this.fontsize
         );
         this.charCache.set(char, offCanvas);
         return offCanvas;

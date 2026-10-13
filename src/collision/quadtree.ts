@@ -51,10 +51,17 @@ export class QuadTree {
 
         if (this.divided) {
             this.divided = false;
-            delete this.top_right;
-            delete this.top_left;
-            delete this.bottom_right;
-            delete this.bottom_left;
+
+            // prevent constantly creating and destroying objects reducing lag
+            this.top_right!.clear();
+            this.top_left!.clear();
+            this.bottom_right!.clear();
+            this.bottom_left!.clear();
+
+            // delete this.top_right;
+            // delete this.top_left;
+            // delete this.bottom_right;
+            // delete this.bottom_left;
         }
     }
 
@@ -63,10 +70,18 @@ export class QuadTree {
     }
 
     subdivide(): void {
-        this.top_left = new QuadTree(this.boundary.subdivide(top_left), this.capacity, this.depth + 1);
-        this.top_right = new QuadTree(this.boundary.subdivide(top_right), this.capacity, this.depth + 1);
-        this.bottom_left = new QuadTree(this.boundary.subdivide(bottom_left), this.capacity, this.depth + 1);
-        this.bottom_right = new QuadTree(this.boundary.subdivide(bottom_right), this.capacity, this.depth + 1);
+        if(this.top_left instanceof QuadTree){
+            // prevent constantly creating and destroying objects reducing lag
+            this.top_left!.capacity = this.capacity;
+            this.top_right!.capacity = this.capacity;
+            this.bottom_left!.capacity = this.capacity;
+            this.bottom_right!.capacity = this.capacity;
+        } else{
+            this.top_left = new QuadTree(this.boundary.subdivide(top_left), this.capacity, this.depth + 1);
+            this.top_right = new QuadTree(this.boundary.subdivide(top_right), this.capacity, this.depth + 1);
+            this.bottom_left = new QuadTree(this.boundary.subdivide(bottom_left), this.capacity, this.depth + 1);
+            this.bottom_right = new QuadTree(this.boundary.subdivide(bottom_right), this.capacity, this.depth + 1);
+        }
 
         this.divided = true;
 
@@ -75,10 +90,10 @@ export class QuadTree {
         // in the smallest available rectangle.
         for (const p of this.points) {
             const inserted =
-                this.top_left.insert(p) ||
-                this.top_right.insert(p) ||
-                this.bottom_left.insert(p) ||
-                this.bottom_right.insert(p);
+                this.top_left!.insert(p) ||
+                this.top_right!.insert(p) ||
+                this.bottom_left!.insert(p) ||
+                this.bottom_right!.insert(p);
 
             if (!inserted) {
                 throw RangeError('capacity must be greater than 0');
