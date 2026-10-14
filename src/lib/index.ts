@@ -17,7 +17,7 @@ export default class PhysicsBanner{
     private lastTime: number = 0;
     private animationFrameId: number | null = null;
     private characters!: string[];
-    private random_speed = 100;
+    private shoot_speed = 100;
     private quadTree: QuadTree;
     private resizeObserver: ResizeObserver;
     private intersectionObserver: IntersectionObserver;
@@ -75,11 +75,7 @@ export default class PhysicsBanner{
         this.set_width_height();
 
         // 94 printable, non-whitespace ASCII characters
-        this.set_spawning_characters(`!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_\`abcdefghijklmnopqrstuvwxyz{|}~`);
-    }
-
-    public async setup(){
-        await this.charCache.initFont(this.font_url);
+        this.set_shooting_characters(`!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_\`abcdefghijklmnopqrstuvwxyz{|}~`);
     }
 
     private set_width_height(){
@@ -95,25 +91,29 @@ export default class PhysicsBanner{
         return Array.from(this.segmenter.segment(str), (segment) => segment.segment);
     }
 
-    private run(): void{
-        if (this.animationFrameId === null) {
-            this.animationFrameId = requestAnimationFrame(this.update.bind(this));
-        }
-    }
-
-    private stop(): void{
-        if (this.animationFrameId !== null) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
-        }
-    }
-
     [Symbol.dispose]() {
         // disposes of event listeners and observers
         this.stop();
         this.resizeObserver.disconnect();
         this.intersectionObserver.disconnect();
         this.controller.abort();
+    }
+
+    async setup(){
+        await this.charCache.initFont(this.font_url);
+    }
+
+    run(): void{
+        if (this.animationFrameId === null) {
+            this.animationFrameId = requestAnimationFrame(this.update.bind(this));
+        }
+    }
+
+    stop(): void{
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
     }
 
     enable_debug(debug: boolean){
@@ -128,12 +128,12 @@ export default class PhysicsBanner{
         this.gravity = gravity;
     }
 
-    set_spawning_characters(characters: string){
+    set_shooting_characters(characters: string){
         this.characters = this.splitGraphemes(characters);
     }
 
-    set_random_shoot_speed(random_speed: number){
-        this.random_speed = random_speed;
+    set_shoot_speed(random_speed: number){
+        this.shoot_speed = random_speed;
     }
 
     shoot_character(): void{
@@ -144,7 +144,7 @@ export default class PhysicsBanner{
         const char = this.generateRandomCharacter();
 
         this.entities.push(new PhysicsObject(x* this.canvas_width, y * this.canvas_height, char,
-            x * this.random_speed, y * this.random_speed, 1, this.charCache.getPolygon(char)));
+            x * this.shoot_speed, y * this.shoot_speed, 1, this.charCache.getPolygon(char)));
     }
 
     spawn_string(characters: string, HPostion: number = .5, VPosition: number = .5, textAlignment: "left" | "center" | "right" = "left"){
