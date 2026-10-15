@@ -53,8 +53,19 @@ export default class PhysicsBanner{
 
         this.resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
-                this.canvas_width = entry.contentRect.width;
-                this.canvas_height = entry.contentRect.height;
+                const boxSize = entry.contentBoxSize[0];
+                const width = boxSize?.inlineSize ?? entry.contentRect.width;
+                const height = boxSize?.blockSize ?? entry.contentRect.height;
+
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.round(width * dpr);
+                canvas.height = Math.round(height * dpr);
+                    
+                // Reset or scale context to match
+                this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                this.canvas_width = width;
+                this.canvas_height = height;
                 this.set_width_height();
             }
         });
@@ -79,7 +90,7 @@ export default class PhysicsBanner{
     }
 
     private set_width_height(){
-        this.quadTree.boundary.set_rect(this.canvas_width / 2, this.canvas_height / 2, this.canvas_width, this.canvas_height)
+        this.quadTree.modify_boundary(this.canvas_width / 2, this.canvas_height / 2, this.canvas_width, this.canvas_height);
     }
 
     private generateRandomCharacter(): string {

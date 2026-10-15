@@ -14,11 +14,69 @@ const canvas: HTMLCanvasElement = document.getElementById('Canvas') as HTMLCanva
 const pane = new Pane({ title: 'Physics Banner Showcase' });
 pane.registerPlugin(TextareaPlugin); // for multi-line string
 
+const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+const applyPaneTheme = (isDark: boolean) => {
+    const theme = isDark
+        ? { // dark theme from https://tweakpane.github.io/docs/theming/
+            '--tp-base-background-color': ' hsla(0, 0%, 10%, 0.8)',
+            '--tp-base-shadow-color': ' hsla(0, 0%, 0%, 0.2)',
+            '--tp-button-background-color': ' hsla(0, 0%, 80%, 1)',
+            '--tp-button-background-color-active': ' hsla(0, 0%, 100%, 1)',
+            '--tp-button-background-color-focus': ' hsla(0, 0%, 95%, 1)',
+            '--tp-button-background-color-hover': ' hsla(0, 0%, 85%, 1)',
+            '--tp-button-foreground-color': ' hsla(0, 0%, 0%, 0.8)',
+            '--tp-container-background-color': ' hsla(0, 0%, 0%, 0.3)',
+            '--tp-container-background-color-active': ' hsla(0, 0%, 0%, 0.6)',
+            '--tp-container-background-color-focus': ' hsla(0, 0%, 0%, 0.5)',
+            '--tp-container-background-color-hover': ' hsla(0, 0%, 0%, 0.4)',
+            '--tp-container-foreground-color': ' hsla(0, 0%, 100%, 0.5)',
+            '--tp-groove-foreground-color': ' hsla(0, 0%, 0%, 0.2)',
+            '--tp-input-background-color': ' hsla(0, 0%, 0%, 0.3)',
+            '--tp-input-background-color-active': ' hsla(0, 0%, 0%, 0.6)',
+            '--tp-input-background-color-focus': ' hsla(0, 0%, 0%, 0.5)',
+            '--tp-input-background-color-hover': ' hsla(0, 0%, 0%, 0.4)',
+            '--tp-input-foreground-color': ' hsla(0, 0%, 100%, 0.5)',
+            '--tp-label-foreground-color': ' hsla(0, 0%, 100%, 0.5)',
+            '--tp-monitor-background-color': ' hsla(0, 0%, 0%, 0.3)',
+            '--tp-monitor-foreground-color': ' hsla(0, 0%, 100%, 0.3)',
+        } // light theme from https://github.com/kitschpatrol/svelte-tweakpane-ui/blob/main/src/lib/theme.ts
+        : {
+            '--tp-base-background-color': ' hsla(230, 5%, 90%, 1.00)',
+            '--tp-base-shadow-color': ' hsla(0, 0%, 0%, 0.10)',
+            '--tp-button-background-color': ' hsla(230, 7%, 75%, 1.00)',
+            '--tp-button-background-color-active': ' hsla(230, 7%, 60%, 1.00)',
+            '--tp-button-background-color-focus': ' hsla(230, 7%, 65%, 1.00)',
+            '--tp-button-background-color-hover': ' hsla(230, 7%, 70%, 1.00)',
+            '--tp-button-foreground-color': ' hsla(230, 10%, 30%, 1.00)',
+            '--tp-container-background-color': ' hsla(230, 15%, 30%, 0.20)',
+            '--tp-container-background-color-active': ' hsla(230, 15%, 30%, 0.32)',
+            '--tp-container-background-color-focus': ' hsla(230, 15%, 30%, 0.28)',
+            '--tp-container-background-color-hover': ' hsla(230, 15%, 30%, 0.24)',
+            '--tp-container-foreground-color': ' hsla(230, 10%, 30%, 1.00)',
+            '--tp-groove-foreground-color': ' hsla(230, 15%, 30%, 0.10)',
+            '--tp-input-background-color': ' hsla(230, 15%, 30%, 0.10)',
+            '--tp-input-background-color-active': ' hsla(230, 15%, 30%, 0.22)',
+            '--tp-input-background-color-focus': ' hsla(230, 15%, 30%, 0.18)',
+            '--tp-input-background-color-hover': ' hsla(230, 15%, 30%, 0.14)',
+            '--tp-input-foreground-color': ' hsla(230, 10%, 30%, 1.00)',
+            '--tp-label-foreground-color': ' hsla(230, 10%, 30%, 0.70)',
+            '--tp-monitor-background-color': ' hsla(230, 15%, 30%, 0.10)',
+            '--tp-monitor-foreground-color': ' hsla(230, 10%, 30%, 0.50)',
+        };
+
+    for (const [property, value] of Object.entries(theme)) {
+        pane.element.style.setProperty(property, value);
+    }
+};
+
+applyPaneTheme(colorScheme.matches);
+colorScheme.addEventListener('change', (event) => applyPaneTheme(event.matches));
+
 const nonResetAbleObjects = {
 	DebugMode: false,
     EnableBounds: true,
     Gravity: 0.0,
-    shoot_speed: 100.0,
+    shoot_speed: 250.0,
     set_shoot_characters: `!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_\`abcdefghijklmnopqrstuvwxyz{|}~`,
     shoot_characters: function() {},
     pause_play: function() {},
@@ -29,7 +87,7 @@ const ResetAbleObjects = {
     font_url: '/Physics-Banner/fonts/courier-prime-latin-400-normal.woff',
     font_segmenter: 'en',
 	font_size: 16,
-    fontcolor: '#000000',
+    fontcolor: '#00ff22',
     HPosition: 0.5,
     VPosition: 0.5,
     textAlignment: "center" as "center" | "left" | "right",
@@ -72,7 +130,7 @@ simulationFolder.addBinding(nonResetAbleObjects, 'Gravity', { min: -20, max: 20,
     nonResetAbleObjects.Gravity = event.value;
     physics_banner.set_gravity(event.value);
 });
-simulationFolder.addBinding(nonResetAbleObjects, 'shoot_speed', { label: 'Shoot Speed', min: 0, max: 100, step: 1 }).on('change', (event) => {
+simulationFolder.addBinding(nonResetAbleObjects, 'shoot_speed', { label: 'Shoot Speed', min: 0, max: 500, step: 10 }).on('change', (event) => {
     nonResetAbleObjects.shoot_speed = event.value;
     physics_banner.set_shoot_speed(event.value);
 });

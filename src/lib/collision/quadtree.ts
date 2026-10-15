@@ -15,7 +15,7 @@ export const bottom_right: Quadrant = 3;
 
 
 export class QuadTree {
-    public boundary: Rectangle;
+    private boundary: Rectangle;
     private capacity: number;
     private points: Point[];
     private divided: boolean;
@@ -195,6 +195,17 @@ export class QuadTree {
         }
 
         return this.points.length;
+    }
+
+    modify_boundary(x: number, y: number, w: number, h: number){
+        this.boundary.set_rect(x, y, w, h);
+
+        if(this.top_left instanceof QuadTree){
+            this.top_left!.modify_boundary(x + w / 4, y - h / 4, w / 2, h / 2);
+            this.top_right!.modify_boundary(x - w / 4, y - h / 4, w / 2, h / 2);
+            this.bottom_left!.modify_boundary(x + w / 4, y + h / 4, w / 2, h / 2);
+            this.bottom_right!.modify_boundary(x - w / 4, y + h / 4, w / 2, h / 2);
+        }
     }
 
     debug_render(ctx: CanvasRenderingContext2D){

@@ -1,6 +1,6 @@
 {
-  "name": "physics-banner",
-  "private": false,
+  "name": "@nickolasddiaz/physics-banner",
+  "private": true,
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/physics-banner.umd.cjs",

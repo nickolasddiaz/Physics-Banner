@@ -7,12 +7,35 @@
     <script type="module" src="/src/demo.js"></script>
 
     <style>
+        :root {
+            color-scheme: light dark;
+            --page-background: #ffffff;
+            --page-text: #1f2937;
+            --canvas-border: #1f2937;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --page-background: #111827;
+                --page-text: #f9fafb;
+                --canvas-border: #d1d5db;
+            }
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--page-background);
+            color: var(--page-text);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
         #Canvas{
-            border: 1px solid black; 
-            /* width: 80vw;
+            border: 1px solid var(--canvas-border);
+            width: 80vw;
             height: auto;
             display: block;
-            margin: 0 auto; */
+            margin: 0 auto;
         }
         
         .container {
@@ -20,12 +43,19 @@
             place-items: center;
         }
 
+        .tp-dfwv {
+            left: 20px !important;
+            right: auto !important;
+            top: 20px !important;
+        }
+
+
     </style>
 </head>
 <body>
     <h1 class="container">Physics Banner + tweakpane Demo</h1>
     <div class="container">
-        <canvas id="Canvas" width="700" height="700"></canvas>
+        <canvas id="Canvas"></canvas>
     </div>
 </body>
 </html>

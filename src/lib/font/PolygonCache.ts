@@ -177,7 +177,7 @@ export default class PolygonCache {
         if (this.charCache.has(char))
             return this.charCache.get(char)!;
 
-        const offCanvas:  OffscreenCanvas = new OffscreenCanvas(this.fontsize * 2, this.fontsize * 2);
+        const offCanvas: OffscreenCanvas = new OffscreenCanvas(this.fontsize * 2, this.fontsize * 2);
         const oCtx: OffscreenCanvasRenderingContext2D = offCanvas.getContext('2d')!;
 
         const path = this.font.getPath(char, 0, 0, this.fontsize);
@@ -186,17 +186,15 @@ export default class PolygonCache {
         const x = canvasCenter - (bounds.x1 + bounds.x2) / 2;
         const y = canvasCenter - (bounds.y1 + bounds.y2) / 2;
 
-        oCtx.fillStyle = this.color;
+        const positionedPath = this.font.getPath(char, x, y, this.fontsize);
 
-        this.font.draw(
-            oCtx as unknown as CanvasRenderingContext2D,
-            char,
-            x,
-            y,
-            this.fontsize
-        );
+        positionedPath.fill = this.color;
+
+        positionedPath.draw(oCtx as unknown as CanvasRenderingContext2D);
+
         this.charCache.set(char, offCanvas);
         return offCanvas;
     }
+
 
 }
