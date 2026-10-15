@@ -32,5 +32,4 @@ package-lock.json
 # font files
 *.ttf
 *.OTF
-*.WOFF
 *WOFF2

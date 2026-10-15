@@ -1,38 +1,23 @@
 import PhysicsBanner from "./lib/index.js";
-import GUI from 'lil-gui'; 
+import { Pane } from 'tweakpane';
+import * as TextareaPlugin from '@pangenerator/tweakpane-textarea-plugin';
+import old_ascii_art from './ascii_art.txt?raw';
+
+// https://www.asciiart.eu/text-to-ascii-art using Larry 3D courier font
+// https://www.shortc.com/javascript-escaper/ javascript character escaper
+let ascii_art = old_ascii_art.split(/\r?\n/).join('\n');
 
 const canvas: HTMLCanvasElement = document.getElementById('Canvas') as HTMLCanvasElement;
 
-// https://texteditor.com/ascii-art/ pipes
-// const ascii_art: string = `
-//     ╔╗╔╗╔╗    ╔╗                 
-//     ║║║║║║    ║║                 
-//     ║║║║║║╔══╗║║ ╔══╗╔══╗╔╗╔╗╔══╗
-//     ║╚╝╚╝║║╔╗║║║ ║╔═╝║╔╗║║╚╝║║╔╗║
-//     ╚╗╔╗╔╝║║═╣║╚╗║╚═╗║╚╝║║║║║║║═╣
-//      ╚╝╚╝ ╚══╝╚═╝╚══╝╚══╝╚╩╩╝╚══╝
-                             
-//  ╔╗                             ╔╗     
-// ╔╝╚╗                           ╔╝╚╗    
-// ╚╗╔╝╔══╗    ╔╗╔╗╔╗ ╔╗    ╔══╗╔╗╚╗╔╝╔══╗
-//  ║║ ║╔╗║    ║╚╝║║║ ║║    ║══╣╠╣ ║║ ║╔╗║
-//  ║╚╗║╚╝║    ║║║║║╚═╝║    ╠══║║║ ║╚╗║║═╣
-//  ╚═╝╚══╝    ╚╩╩╝╚═╗╔╝    ╚══╝╚╝ ╚═╝╚══╝
-//                 ╔═╝║                   
-//                 ╚══╝                                                                                                                                                 
-// `;
 
-let ascii_art = `testa|shdfj|lasdhfjasldfwqertprweut
-adsf|asf
-`;
-
-
-const gui = new GUI({ title: 'Physics Banner Showcase' });
+// https://tweakpane.github.io/docs/
+const pane = new Pane({ title: 'Physics Banner Showcase' });
+pane.registerPlugin(TextareaPlugin); // for multi-line string
 
 const nonResetAbleObjects = {
 	DebugMode: false,
     EnableBounds: true,
-    gravity: 0.0,
+    Gravity: 0.0,
     shoot_speed: 100.0,
     set_shoot_characters: `!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_\`abcdefghijklmnopqrstuvwxyz{|}~`,
     shoot_characters: function() {},
@@ -40,15 +25,11 @@ const nonResetAbleObjects = {
 };
 
 const ResetAbleObjects = {
-    font_url: '/Physics-Banner/fonts/NotoSansDisplay.woff',
+    // from courier font from https://fontsource.org/fonts/courier-prime/use
+    font_url: '/Physics-Banner/fonts/courier-prime-latin-400-normal.woff',
     font_segmenter: 'en',
-	font_size: 24,
-    fontcolor: {
-        string: '#000000',
-        int: 0x000000,
-        object: { r: 0, g: 0, b: 0 },
-        array: [ 0, 0, 0 ]
-    },
+	font_size: 16,
+    fontcolor: '#000000',
     HPosition: 0.5,
     VPosition: 0.5,
     textAlignment: "center" as "center" | "left" | "right",
@@ -59,69 +40,76 @@ const ResetAbleObjects = {
 let physics_banner: PhysicsBanner;
 
 async function reset(){
-    physics_banner = new PhysicsBanner(canvas, ResetAbleObjects.font_url, ResetAbleObjects.fontcolor.string, ResetAbleObjects.font_size, ResetAbleObjects.font_segmenter);
+    try {
+    physics_banner = new PhysicsBanner(canvas, ResetAbleObjects.font_url, ResetAbleObjects.fontcolor, ResetAbleObjects.font_size, ResetAbleObjects.font_segmenter);
     await physics_banner.setup();
 
     physics_banner.enable_debug(nonResetAbleObjects.DebugMode);
     physics_banner.enable_bounds(nonResetAbleObjects.EnableBounds);
-    physics_banner.set_gravity(nonResetAbleObjects.gravity);
+    physics_banner.set_gravity(nonResetAbleObjects.Gravity);
     physics_banner.set_shoot_speed(nonResetAbleObjects.shoot_speed);
     physics_banner.set_shooting_characters(nonResetAbleObjects.set_shoot_characters);
     physics_banner.spawn_string(ResetAbleObjects.spawn_string, ResetAbleObjects.HPosition, ResetAbleObjects.VPosition, ResetAbleObjects.textAlignment);
+
+    } catch (error: unknown) {
+        console.error(error);
+        alert(error);
+    }
 }
 
 await reset();
 
-const simulationFolder = gui.addFolder('NonResetable Items');
-simulationFolder.add(nonResetAbleObjects, 'DebugMode').name('Debug mode').onChange((enabled: boolean) => {
-    nonResetAbleObjects.DebugMode = enabled;
-    physics_banner.enable_debug(enabled);
+const simulationFolder = pane.addFolder({ title: 'NonResetable Items' });
+simulationFolder.addBinding(nonResetAbleObjects, 'DebugMode', { label: 'Debug Mode' }).on('change', (event) => {
+    nonResetAbleObjects.DebugMode = event.value;
+    physics_banner.enable_debug(event.value);
 });
-simulationFolder.add(nonResetAbleObjects, 'EnableBounds').name('Enable bounds').onChange((enabled: boolean) => {
-    nonResetAbleObjects.EnableBounds = enabled;
-    physics_banner.enable_bounds(enabled);
+simulationFolder.addBinding(nonResetAbleObjects, 'EnableBounds', { label: 'Enable Bounds' }).on('change', (event) => {
+    nonResetAbleObjects.EnableBounds = event.value;
+    physics_banner.enable_bounds(event.value);
 });
-simulationFolder.add(nonResetAbleObjects, 'gravity', -20, 20, 0.1).onChange((value: number) => {
-    nonResetAbleObjects.gravity = value;
-    physics_banner.set_gravity(value);
+simulationFolder.addBinding(nonResetAbleObjects, 'Gravity', { min: -20, max: 20, step: 0.1 }).on('change', (event) => {
+    nonResetAbleObjects.Gravity = event.value;
+    physics_banner.set_gravity(event.value);
 });
-simulationFolder.add(nonResetAbleObjects, 'shoot_speed', 0, 100.0, 1).name('Shoot speed').onChange((value: number) => {
-    nonResetAbleObjects.shoot_speed = value;
-    physics_banner.set_shoot_speed(value);
+simulationFolder.addBinding(nonResetAbleObjects, 'shoot_speed', { label: 'Shoot Speed', min: 0, max: 100, step: 1 }).on('change', (event) => {
+    nonResetAbleObjects.shoot_speed = event.value;
+    physics_banner.set_shoot_speed(event.value);
 });
-simulationFolder.add(nonResetAbleObjects, 'set_shoot_characters').name('Shoot Characters').onChange((value: string) => {
-    nonResetAbleObjects.set_shoot_characters = value;
-    physics_banner.set_shooting_characters(nonResetAbleObjects.set_shoot_characters);
+simulationFolder.addBinding(nonResetAbleObjects, 'set_shoot_characters', { label: 'Shoot Characters' }).on('change', (event) => {
+    nonResetAbleObjects.set_shoot_characters = event.value;
+    physics_banner.set_shooting_characters(event.value);
 });
-simulationFolder.add(nonResetAbleObjects, 'shoot_characters').name('Shoot character').onChange((_value: number) => {
+simulationFolder.addButton({ title: 'Shoot character' }).on('click', () => {
     physics_banner.shoot_character();
 });
 
-const textFolder = gui.addFolder('Resetable Items');
-textFolder.add(ResetAbleObjects, 'font_url').name('Font URL').onChange((value: string) => {
-    ResetAbleObjects.font_url = value;
+const textFolder = pane.addFolder({ title: 'Resetable Items' });
+textFolder.addBinding(ResetAbleObjects, 'font_url', { label: 'Font URL' }).on('change', (event) => {
+    ResetAbleObjects.font_url = event.value;
 });
-textFolder.add(ResetAbleObjects, 'font_segmenter').name('Font Segmenter').onChange((value: string) => {
-    ResetAbleObjects.font_segmenter = value;
+textFolder.addBinding(ResetAbleObjects, 'font_segmenter', { label: 'Font Segmenter' }).on('change', (event) => {
+    ResetAbleObjects.font_segmenter = event.value;
 });
-textFolder.add(ResetAbleObjects, 'font_size', 0, 100, 1).name('Font Size').onChange((value: number) => {
-    ResetAbleObjects.font_size = value;
+textFolder.addBinding(ResetAbleObjects, 'font_size', { label: 'Font Size', min: 0, max: 100, step: 1 }).on('change', (event) => {
+    ResetAbleObjects.font_size = event.value;
 });
-textFolder.addColor(ResetAbleObjects, 'fontcolor').name('Font Color').onChange((value: number) => {
-    ResetAbleObjects.fontcolor.int = value;
+textFolder.addBinding(ResetAbleObjects, 'fontcolor', { label: 'Font Color', view: 'color' }).on('change', (event) => {
+    ResetAbleObjects.fontcolor = event.value;
 });
-textFolder.add(ResetAbleObjects, 'HPosition', 0, 1, 0.01).name('Horizontal Position').onChange((value: number) => {
-    ResetAbleObjects.HPosition = value;
+textFolder.addBinding(ResetAbleObjects, 'HPosition', { label: 'Horizontal Position', min: 0, max: 1, step: 0.01 }).on('change', (event) => {
+    ResetAbleObjects.HPosition = event.value;
 });
-textFolder.add(ResetAbleObjects, 'VPosition', 0, 1, 0.01).name('Verticle Position').onChange((value: number) => {
-    ResetAbleObjects.VPosition = value;
+textFolder.addBinding(ResetAbleObjects, 'VPosition', { label: 'Verticle Position', min: 0, max: 1, step: 0.01 }).on('change', (event) => {
+    ResetAbleObjects.VPosition = event.value;
 });
-textFolder.add(ResetAbleObjects, 'textAlignment', { left: 'left', center: 'center', right: 'right' }).name('Text Alignment').onChange((value: string) => {
-    ResetAbleObjects.textAlignment = value as "center" | "left" | "right";
+textFolder.addBinding(ResetAbleObjects, 'textAlignment', { label: 'Text Alignment', options: { left: 'left', center: 'center', right: 'right' } }).on('change', (event) => {
+    ResetAbleObjects.textAlignment = event.value;
 });
-textFolder.add(ResetAbleObjects, 'spawn_string').name('Spawn String').onChange((value: string) => {
-    ResetAbleObjects.spawn_string = value;
+// https://github.com/panGenerator/tweakpane-textarea-plugin
+textFolder.addBinding(ResetAbleObjects, 'spawn_string', { label: 'Spawn String', view: 'textarea', rows: 6, }).on('change', (event) => { // multiline string
+    ResetAbleObjects.spawn_string = event.value;
 });
-textFolder.add(ResetAbleObjects, 'reset').name('Reset').onChange((_value: number) => {
-    reset();
+textFolder.addButton({ title: 'Reset' }).on('click', () => {
+    void reset();
 });

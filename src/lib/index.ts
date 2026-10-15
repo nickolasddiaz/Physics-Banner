@@ -136,6 +136,12 @@ export default class PhysicsBanner{
         this.shoot_speed = random_speed;
     }
 
+    spawn_character(x: number, y: number, char: string, velX: number, velY: number){
+        if (this.charCache.isCharacterValid(char)) {
+            this.entities.push(new PhysicsObject(x, y, char, velX, velY, 1, this.charCache.getPolygon(char)));
+        }
+    }
+
     shoot_character(): void{
         const randomRadian: number = Math.random() * 2 * Math.PI;
         const x: number = Math.cos(randomRadian) * 2;
@@ -143,8 +149,7 @@ export default class PhysicsBanner{
 
         const char = this.generateRandomCharacter();
 
-        this.entities.push(new PhysicsObject(x* this.canvas_width, y * this.canvas_height, char,
-            x * this.shoot_speed, y * this.shoot_speed, 1, this.charCache.getPolygon(char)));
+        this.spawn_character(x* this.canvas_width, y * this.canvas_height, char, x * this.shoot_speed, y * this.shoot_speed);
     }
 
     spawn_string(characters: string, HPostion: number = .5, VPosition: number = .5, textAlignment: "left" | "center" | "right" = "left"){
@@ -209,9 +214,7 @@ export default class PhysicsBanner{
                 const x = cursorX + charWidth / 2;
                 const y = cursorY + (lineHeight - this.charCache.getCharacterHeight(char)) / 2;
                 
-
-                this.entities.push(new PhysicsObject(x, y, char,
-                    0, 0, 1, this.charCache.getPolygon(char)));
+                this.spawn_character(x, y, char, 0, 0);
 
                 cursorX += charWidth;
             }

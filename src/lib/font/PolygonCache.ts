@@ -32,9 +32,18 @@ export default class PolygonCache {
     private setPolygon(char: string): void{
         if (!(char in this.polyCache)){
             var polygon = this.polygonFromFont(char);
+            if (polygon.length === 0){
+                this.polyCache[char] = polygon;
+                return;
+            }
             var convexPolygon = this.convexHull(polygon);
             this.polyCache[char] = convexPolygon;
         } 
+    }
+
+    public isCharacterValid(char: string): boolean{
+        this.setPolygon(char);
+        return this.polyCache[char]!.length !== 0;
     }
 
 
@@ -73,9 +82,13 @@ export default class PolygonCache {
             }
         }
 
+        this.widthCache[char] = this.font.getAdvanceWidth(char, this.fontsize);
+
         // center the polygon
-        if (coords.length === 0) 
-            throw ("Font has no paths");
+        if (coords.length === 0) {
+            this.heightCache[char] = 0;
+            return [];
+        }
 
         let minX = coords[0]!.x;
         let maxX = coords[0]!.x;
@@ -90,7 +103,6 @@ export default class PolygonCache {
             maxY = Math.max(pt.y, maxY);
         }
 
-        this.widthCache[char] = this.font.getAdvanceWidth(char, this.fontsize);
         this.heightCache[char] = (maxY - minY);
 
         const centerX = (minX + maxX) / 2;
