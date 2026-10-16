@@ -25,9 +25,10 @@ export default defineConfig(({ command, mode }) => {
 
   // Configuration for building the GitHub Pages Demo Site
   return {
-    base: '/Physics-Banner/',
+    // base: '/Physics-Banner/docs',
+    base: '/demo/',
     build: {
-      outDir: 'dist-demo',
+      outDir: 'docs/demo',
     },
   };
 });

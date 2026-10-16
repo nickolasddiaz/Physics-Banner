@@ -7,6 +7,11 @@ import polygonFromChar from './font/PolygonCache.js';
 import PolygonCache from './font/PolygonCache.js';
 
 
+/**
+ * Rigid body physics simulation for ascii art/text.
+ * Uses opentype.js to get character paths from a font.
+ * Supports gravity, collisions, boundary behavior, and optional debugging.
+ */
 export default class PhysicsBanner{
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -28,6 +33,16 @@ export default class PhysicsBanner{
     private segmenter: Intl.Segmenter;
     private font_url: string;
 
+    /**
+     * Creates a banner on the given canvas and begins observing its size and
+     * visibility. Call {@link setup} before spawning text to load the font.
+     * @param canvas Canvas on which the banner is rendered.
+     * @param font_url URL of the font used to create the character, supports only WOFF/OTF/TTF type font and not WOFF2.
+     * @param color Color used when initializing the character cache.
+     * @param font_size Font size used to build character polygons.
+     * @param segmenter Locale used to split text into grapheme clusters.
+     * @throws {Error} If a 2D rendering context cannot be obtained.
+     */
     constructor(canvas: HTMLCanvasElement, font_url: string, color: string = 'black', font_size: number = 36, segmenter: string = 'en'
     ){
         this.charCache = new PolygonCache(font_size, color);
@@ -89,19 +104,23 @@ export default class PhysicsBanner{
         this.set_shooting_characters(`!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_\`abcdefghijklmnopqrstuvwxyz{|}~`);
     }
 
+    /** Updates the quadtree boundary to match the canvas dimensions. */
     private set_width_height(){
         this.quadTree.modify_boundary(this.canvas_width / 2, this.canvas_height / 2, this.canvas_width, this.canvas_height);
     }
 
+    /** Selects a random character from the configured shooting characters. */
     private generateRandomCharacter(): string {
         const randomIndex: number = Math.floor(Math.random() * this.characters.length);
         return this.characters[randomIndex]!;
     }
 
+    /** Splits text into grapheme clusters using the segmenter. */
     private splitGraphemes(str: string): string[] {
         return Array.from(this.segmenter.segment(str), (segment) => segment.segment);
     }
 
+    /** Safely destroys this class by stoping the physics loop and releases the event listeners and observers. Automatically called when this class is disposed.*/
     [Symbol.dispose]() {
         // disposes of event listeners and observers
         this.stop();
@@ -110,16 +129,19 @@ export default class PhysicsBanner{
         this.controller.abort();
     }
 
+    /** Loads the configured font into the character polygon cache. */
     async setup(){
         await this.charCache.initFont(this.font_url);
     }
 
+    /** Starts the physics loop if it is not already running. */
     run(): void{
         if (this.animationFrameId === null) {
             this.animationFrameId = requestAnimationFrame(this.update.bind(this));
         }
     }
 
+    /** Stops the physics loop while leaving the banner ready to resume. */
     stop(): void{
         if (this.animationFrameId !== null) {
             cancelAnimationFrame(this.animationFrameId);
@@ -127,32 +149,50 @@ export default class PhysicsBanner{
         }
     }
 
+    /** Enables or disables showing the debug information. */
+    /** @param debug Whether debug rendering should be enabled. */
     enable_debug(debug: boolean){
         this.debug = debug;
     }
 
+    /** Chooses whether entities are contained by the canvas or wrap around it. */
+    /** @param bounds `true` makes the entities bounce at the edges; `false` makes them loop at edges. */
     enable_bounds(bounds: boolean){
         this.enforcebounds = bounds;
     }
 
+    /** Sets the vertical gravity acceleration applied to entities. */
+    /** @param gravity Gravity acceleration; zero to disable gravity. */
     set_gravity(gravity: number){
         this.gravity = gravity;
     }
 
+    /** Sets the pool of characters used by {@link shoot_character}. */
+    /** @param characters Characters that are picked randomly to be shot at. */
     set_shooting_characters(characters: string){
         this.characters = this.splitGraphemes(characters);
     }
 
+    /** Sets the speed used when shooting a randomly selected character. */
+    /** @param random_speed Magnitude of the initial shooting velocity. */
     set_shoot_speed(random_speed: number){
         this.shoot_speed = random_speed;
     }
 
+    /** Spawns a single character at a position with the given velocity.
+     * @param x Initial horizontal center position. 
+     * @param y Initial vertical center position. 
+     * @param char Character to spawn. 
+     * @param velX Initial horizontal velocity. 
+     * @param velY Initial vertical velocity. 
+     */
     spawn_character(x: number, y: number, char: string, velX: number, velY: number){
         if (this.charCache.isCharacterValid(char)) {
             this.entities.push(new PhysicsObject(x, y, char, velX, velY, 1, this.charCache.getPolygon(char)));
         }
     }
 
+    /** Fires a random character inward from the screen. */
     shoot_character(): void{
         const randomRadian: number = Math.random() * 2 * Math.PI;
         const x: number = Math.cos(randomRadian) * 2;
@@ -163,9 +203,14 @@ export default class PhysicsBanner{
         this.spawn_character(x* this.canvas_width, y * this.canvas_height, char, x * this.shoot_speed, y * this.shoot_speed);
     }
 
+    /**
+     * Spawns the characters into the physics world.
+     * @param characters Text to spawn.
+     * @param HPostion Horizontal placement from 0 (left) to 1 (right) and 0.5 is the center.
+     * @param VPosition Vertical placement from 0 (top) to 1 (bottom) and 0.5 is the center.
+     * @param textAlignment Alignment of each line within the text block. Text is lined up along the left, center, right margin.
+     */
     spawn_string(characters: string, HPostion: number = .5, VPosition: number = .5, textAlignment: "left" | "center" | "right" = "left"){
-        // Position: a number between 0.0 and 1.0, where 0.0 is top/left, 1.0 is bottom/right and 0.5 is center
-        // textAlignment: Text is lined up along the left, center, right margin
         const graphemes = this.splitGraphemes(characters);
         const lineHeight = this.charCache.lineHeight;
         const lines: string[][] = [[]];
@@ -234,7 +279,9 @@ export default class PhysicsBanner{
         }
     }
 
-    update(currentTime: number) {
+    /** Advances physics and renders one animation frame. Called by request animation frame.*/
+    /** @param currentTime Current animation timestamp in milliseconds. */
+    private update(currentTime: number) {
         const max_frame_rate: number = 1 / 16;
         const deltaTime: number = Math.min((currentTime - this.lastTime) / 1000, max_frame_rate);
         this.lastTime = currentTime;
