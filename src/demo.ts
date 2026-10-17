@@ -83,8 +83,7 @@ const nonResetAbleObjects = {
 };
 
 const ResetAbleObjects = {
-    // from courier font from https://fontsource.org/fonts/courier-prime/use
-    font_url: `./${import.meta.env.BASE_URL}/fonts/courier-prime-latin-400-normal.woff`,
+    font_url: `./fonts/courier-prime-latin-400-normal.woff`,
     font_segmenter: 'en',
 	font_size: 16,
     fontcolor: '#00ff22',
@@ -96,6 +95,7 @@ const ResetAbleObjects = {
 };
 
 let physics_banner: PhysicsBanner;
+
 
 async function reset(){
     try {

@@ -1,8 +1,9 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["src/lib/index.ts"],
-  "out": "docs/",
+  "out": "dist-site/api",
   "name": "Physics-Banner Library API",
   "includeVersion": true,
-  "exclude": ["**/*+(.test|.spec).ts"]
+  "exclude": ["**/*+(.test|.spec).ts"],
+  "plugin": ["typedoc-plugin-mermaid"]
 }
